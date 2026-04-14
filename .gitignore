@@ -7,6 +7,9 @@ frontend/node_modules/
 # Build output
 frontend/dist/
 
+# Audio files served from R2 in production
+frontend/public/audio/
+
 <<<<<<< HEAD
 # Wrangler cache
 frontend/.wrangler/
