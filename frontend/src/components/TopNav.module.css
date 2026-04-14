@@ -11,12 +11,16 @@
 .logo {
   font-family: var(--font-script);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--accent);
   margin-right: 24px;
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
 }
 
 .navLinks {

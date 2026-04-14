@@ -79,7 +79,7 @@ Dark mode applied via `html.dark` class set by JS, persisted to `localStorage`.
   /* Typography */
   --font-display:   'DM Serif Display', serif;
   --font-body:      'DM Sans', sans-serif;
-  --font-script:    'Dancing Script', cursive;
+  --font-script:    'Cookie', cursive;
 
   /* Shape */
   --radius:         10px;

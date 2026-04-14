@@ -58,6 +58,25 @@
 }
 .ctrlBtn:hover { background: var(--surface2); }
 
+.fullscreenBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  transition: background 0.12s, color 0.12s;
+  margin-left: 4px;
+}
+.fullscreenBtn:hover {
+  background: var(--surface2);
+  color: var(--text-2);
+}
+
 .playBtn {
   width: 44px;
   height: 44px;
@@ -82,13 +101,17 @@
 }
 
 /* Scrubber */
+.scrubZone {
+  padding: 10px 0;
+  margin: -4px 0;
+  cursor: pointer;
+}
+
 .scrubTrack {
   height: 3px;
   background: var(--surface2);
   border-radius: 2px;
   position: relative;
-  cursor: pointer;
-  margin-bottom: 6px;
 }
 
 .scrubFill {
@@ -112,7 +135,7 @@
   pointer-events: none;
   transition: transform 0.1s;
 }
-.scrubTrack:hover .scrubThumb {
+.scrubZone:hover .scrubThumb {
   transform: translate(-50%, -50%) scale(1.25);
 }
 

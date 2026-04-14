@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import styles from './AudioPlayer.module.css'
+import FullscreenPlayer from './FullscreenPlayer'
 
 function formatTime(secs) {
   if (!secs || isNaN(secs)) return '0:00'
@@ -70,12 +71,24 @@ function VolumeIcon({ level }) {
   )
 }
 
+function FullscreenIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 3 21 3 21 9" />
+      <polyline points="9 21 3 21 3 15" />
+      <line x1="21" y1="3" x2="14" y2="10" />
+      <line x1="3" y1="21" x2="10" y2="14" />
+    </svg>
+  )
+}
+
 export default function AudioPlayer({ src, type, title, info }) {
   const audioRef = useRef(null)
-  const [playing, setPlaying]     = useState(false)
+  const [playing, setPlaying]         = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration]   = useState(0)
-  const [volume, setVolume]       = useState(0.5)
+  const [duration, setDuration]       = useState(0)
+  const [volume, setVolume]           = useState(0.5)
+  const [fullscreen, setFullscreen]   = useState(false)
 
   // Sync playback events
   useEffect(() => {
@@ -120,11 +133,29 @@ export default function AudioPlayer({ src, type, title, info }) {
     audioRef.current.currentTime = pct * duration
   }
 
+  function scrubTo(time) {
+    audioRef.current.currentTime = Math.max(0, Math.min(duration, time))
+  }
+
   const progress = duration ? (currentTime / duration) * 100 : 0
 
   return (
     <div className={styles.card}>
       <audio ref={audioRef} src={src} preload="metadata" />
+
+      <FullscreenPlayer
+        open={fullscreen}
+        onClose={() => setFullscreen(false)}
+        title={title}
+        info={info}
+        type={type}
+        playing={playing}
+        currentTime={currentTime}
+        duration={duration}
+        onTogglePlay={togglePlay}
+        onSkip={skip}
+        onScrubTo={scrubTo}
+      />
 
       <div className={styles.top}>
         <div className={styles.meta}>
@@ -143,13 +174,18 @@ export default function AudioPlayer({ src, type, title, info }) {
           <button className={styles.ctrlBtn} onClick={() => skip(15)} title="15 sek frem">
             <SkipForwardIcon />
           </button>
+          <button className={styles.fullscreenBtn} onClick={() => setFullscreen(true)} title="Fullskjerm">
+            <FullscreenIcon />
+          </button>
         </div>
       </div>
 
       <div className={styles.scrubber}>
-        <div className={styles.scrubTrack} onClick={handleScrub}>
-          <div className={styles.scrubFill} style={{ width: `${progress}%` }} />
-          <div className={styles.scrubThumb} style={{ left: `${progress}%` }} />
+        <div className={styles.scrubZone} onClick={handleScrub}>
+          <div className={styles.scrubTrack}>
+            <div className={styles.scrubFill} style={{ width: `${progress}%` }} />
+            <div className={styles.scrubThumb} style={{ left: `${progress}%` }} />
+          </div>
         </div>
         <div className={styles.bottom}>
           <div className={styles.times}>
