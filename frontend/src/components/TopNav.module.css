@@ -1,0 +1,107 @@
+.topnav {
+  grid-column: 1 / -1;
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px 0 24px;
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 19px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  margin-right: 28px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.logoEm {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.navLinks {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  align-items: center;
+}
+
+.navTab {
+  padding: 6px 13px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--text-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.13s, color 0.13s;
+  white-space: nowrap;
+}
+.navTab:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+.navTab.active {
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.themeToggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  transition: background 0.13s, color 0.13s;
+  flex-shrink: 0;
+}
+.themeToggle:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.trialBadge {
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--accent-2-bg);
+  color: var(--amber);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid rgba(196,164,107,0.3);
+  white-space: nowrap;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  border: 0.5px solid rgba(61,107,90,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}

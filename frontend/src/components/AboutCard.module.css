@@ -1,0 +1,21 @@
+.card {
+  background: var(--accent-bg);
+  border: 0.5px solid rgba(61, 107, 90, 0.18);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.card p {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+.card strong {
+  font-weight: 500;
+}
+
+:global(html.dark) .card {
+  border-color: rgba(82, 168, 130, 0.2);
+}

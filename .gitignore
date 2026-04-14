@@ -1,0 +1,8 @@
+draft.html
+temp-data/
+
+# Dependencies
+frontend/node_modules/
+
+# Build output
+frontend/dist/
