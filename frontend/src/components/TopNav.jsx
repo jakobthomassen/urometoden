@@ -35,7 +35,7 @@ function MoonIcon() {
 export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }) {
   return (
     <nav className={styles.topnav}>
-      <div className={styles.logo}>Uro</div>
+      <button className={styles.logo} onClick={() => onNavigate('Hjem')}>Uro</button>
 
       <div className={styles.navLinks}>
         {NAV_TABS.map(tab => (
