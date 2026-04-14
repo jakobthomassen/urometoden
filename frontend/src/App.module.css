@@ -4,10 +4,17 @@
   grid-template-rows: 56px 1fr;
   height: 100vh;
   overflow: hidden;
+  transition: grid-template-columns 0.2s ease;
 }
 
-@media (max-width: 900px) {
-  .app {
-    grid-template-columns: 200px 1fr 240px;
-  }
+.app.sidebarCollapsed {
+  grid-template-columns: 48px 1fr 290px;
+}
+
+.app.noRightPanel {
+  grid-template-columns: 230px 1fr;
+}
+
+.app.sidebarCollapsed.noRightPanel {
+  grid-template-columns: 48px 1fr;
 }
