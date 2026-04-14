@@ -90,6 +90,10 @@ export default function AudioPlayer({ src, type, title, info }) {
   const [volume, setVolume]           = useState(0.5)
   const [fullscreen, setFullscreen]   = useState(false)
 
+  // Ref so the keydown handler always sees the latest playing value
+  const playingRef = useRef(playing)
+  useEffect(() => { playingRef.current = playing }, [playing])
+
   // Sync playback events
   useEffect(() => {
     const audio = audioRef.current
@@ -104,6 +108,35 @@ export default function AudioPlayer({ src, type, title, info }) {
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
       audio.removeEventListener('ended', onEnded)
     }
+  }, [])
+
+  // Global keyboard shortcuts — space = play/pause, arrows = ±15 s
+  useEffect(() => {
+    function handleKey(e) {
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+      if (e.code === 'Space') {
+        e.preventDefault()
+        const audio = audioRef.current
+        if (playingRef.current) {
+          audio.pause()
+          setPlaying(false)
+        } else {
+          audio.play().then(() => setPlaying(true)).catch(() => {})
+        }
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault()
+        const audio = audioRef.current
+        audio.currentTime = Math.max(0, audio.currentTime - 15)
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault()
+        const audio = audioRef.current
+        audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
   // Sync volume to audio element

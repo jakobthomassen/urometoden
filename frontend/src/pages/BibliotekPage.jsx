@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import styles from './BibliotekPage.module.css'
 import ContentCard from '../components/ContentCard'
+import ReflectionModal from '../components/ReflectionModal'
+import CaseModal from '../components/CaseModal'
 import { LIBRARY_SECTIONS, FILTER_OPTIONS } from '../data/library'
 
 export default function BibliotekPage() {
   const [filter, setFilter] = useState('all')
+  const [activeReflection, setActiveReflection] = useState(null)
+  const [activeCase, setActiveCase] = useState(null)
 
   const sections = filter === 'all'
     ? LIBRARY_SECTIONS
@@ -12,6 +16,15 @@ export default function BibliotekPage() {
 
   return (
     <main className={styles.main}>
+
+      <ReflectionModal
+        item={activeReflection}
+        onClose={() => setActiveReflection(null)}
+      />
+      <CaseModal
+        item={activeCase}
+        onClose={() => setActiveCase(null)}
+      />
 
       <div className={styles.header}>
         <h1 className={styles.title}>Bibliotek</h1>
@@ -44,6 +57,11 @@ export default function BibliotekPage() {
                   label={section.tag}
                   title={item.title}
                   meta={item.meta}
+                  onClick={
+                    section.type === 'reflect' ? () => setActiveReflection(item)
+                    : section.type === 'case'  ? () => setActiveCase(item)
+                    : undefined
+                  }
                 />
               ))}
             </div>
