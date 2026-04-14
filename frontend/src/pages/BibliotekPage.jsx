@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './BibliotekPage.module.css'
 import ContentCard from '../components/ContentCard'
 import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
 import { LIBRARY_SECTIONS, FILTER_OPTIONS } from '../data/library'
 
-export default function BibliotekPage() {
-  const [filter, setFilter] = useState('all')
+export default function BibliotekPage({ initialFilter = 'all' }) {
+  const [filter, setFilter] = useState(initialFilter)
+
+  useEffect(() => { setFilter(initialFilter) }, [initialFilter])
   const [activeReflection, setActiveReflection] = useState(null)
   const [activeCase, setActiveCase] = useState(null)
 

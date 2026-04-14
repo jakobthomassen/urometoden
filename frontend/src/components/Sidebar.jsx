@@ -34,7 +34,7 @@ function WeekBadge({ status }) {
   return <span className={styles.weekBadge}>🔒</span>
 }
 
-export default function Sidebar({ currentWeek, collapsed, onToggleCollapse }) {
+export default function Sidebar({ currentWeek, collapsed, onToggleCollapse, onNavigate }) {
   const doneCount = WEEKS.filter(w => w.status === 'done').length
   const progress = (doneCount / 8) * 100
 
@@ -84,7 +84,11 @@ export default function Sidebar({ currentWeek, collapsed, onToggleCollapse }) {
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Utforsk fritt</span>
           {LIBRARY_ITEMS.map(item => (
-            <button key={item.label} className={styles.libItem}>
+            <button
+              key={item.label}
+              className={styles.libItem}
+              onClick={() => onNavigate('Bibliotek', item.type)}
+            >
               <span className={`${styles.libIcon} ${styles[item.type]}`}>{item.icon}</span>
               {item.label}
             </button>

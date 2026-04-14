@@ -16,6 +16,12 @@ export default function App() {
   const [isDark, setIsDark] = useState(getInitialDark)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('Hjem')
+  const [bibliotekFilter, setBibliotekFilter] = useState('all')
+
+  function navigate(page, filter) {
+    setActivePage(page)
+    if (filter) setBibliotekFilter(filter)
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark)
@@ -36,15 +42,16 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={() => setIsDark(d => !d)}
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={navigate}
       />
       <Sidebar
         currentWeek={1}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+        onNavigate={navigate}
       />
       {activePage === 'Hjem'      && <HomePage />}
-      {activePage === 'Bibliotek' && <BibliotekPage />}
+      {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
       {showRightPanel && <RightPanel />}
     </div>
   )
