@@ -8,13 +8,85 @@ function formatTime(secs) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+// Each wave is drawn as a ribbon (filled shape) so width can vary along its length.
+// amp       — main wave amplitude
+// freq      — main wave spatial frequency
+// speed     — how fast the wave scrolls horizontally
+// phase     — initial phase offset
+// harmonic  — strength of an overtone mixed in (breaks up the perfect sine shape)
+// wFreq     — spatial frequency of the width oscillation
+// wSpeed    — how fast the width pulses over time
+// wPhase    — initial phase of the width oscillation
+// wMin/wMax — min and max half-width of the ribbon in px
+// driftAmp  — how far the whole wave floats vertically
+// driftSpeed— how fast the vertical float cycles
+// driftPhase— initial phase of the drift
 const WAVES = [
-  { freq: 0.0032, amp: 80,  speed: 0.00016, phase: 0.0, color: 'rgba(82,168,130,0.22)',  lw: 1.5 },
-  { freq: 0.0055, amp: 50,  speed: 0.00026, phase: 2.1, color: 'rgba(200,168,110,0.16)', lw: 1.0 },
-  { freq: 0.0022, amp: 110, speed: 0.00010, phase: 4.4, color: 'rgba(82,168,130,0.09)',  lw: 2.5 },
-  { freq: 0.0070, amp: 32,  speed: 0.00038, phase: 1.5, color: 'rgba(200,168,110,0.18)', lw: 0.8 },
-  { freq: 0.0042, amp: 65,  speed: 0.00020, phase: 3.7, color: 'rgba(110,160,210,0.10)', lw: 1.2 },
+  {
+    freq: 0.0032, amp: 75,  speed: 0.00016, phase: 0.0, harmonic: 0.22,
+    wFreq: 0.009, wSpeed: 0.00021, wPhase: 0.0,  wMin: 0.4, wMax: 4.5,
+    driftAmp: 28, driftSpeed: 0.000055, driftPhase: 0.0,
+    color: 'rgba(82,168,130,0.24)',
+  },
+  {
+    freq: 0.0055, amp: 48,  speed: 0.00027, phase: 2.1, harmonic: 0.18,
+    wFreq: 0.014, wSpeed: 0.00030, wPhase: 1.8,  wMin: 0.3, wMax: 3.0,
+    driftAmp: 18, driftSpeed: 0.000070, driftPhase: 2.4,
+    color: 'rgba(200,168,110,0.18)',
+  },
+  {
+    freq: 0.0022, amp: 105, speed: 0.00010, phase: 4.4, harmonic: 0.28,
+    wFreq: 0.007, wSpeed: 0.00015, wPhase: 3.3,  wMin: 0.8, wMax: 6.0,
+    driftAmp: 40, driftSpeed: 0.000040, driftPhase: 1.1,
+    color: 'rgba(82,168,130,0.10)',
+  },
+  {
+    freq: 0.0068, amp: 30,  speed: 0.00040, phase: 1.5, harmonic: 0.15,
+    wFreq: 0.018, wSpeed: 0.00044, wPhase: 0.7,  wMin: 0.2, wMax: 2.5,
+    driftAmp: 14, driftSpeed: 0.000090, driftPhase: 3.9,
+    color: 'rgba(200,168,110,0.20)',
+  },
+  {
+    freq: 0.0042, amp: 62,  speed: 0.00021, phase: 3.7, harmonic: 0.20,
+    wFreq: 0.011, wSpeed: 0.00026, wPhase: 2.2,  wMin: 0.3, wMax: 3.8,
+    driftAmp: 22, driftSpeed: 0.000062, driftPhase: 5.1,
+    color: 'rgba(110,160,210,0.11)',
+  },
 ]
+
+function drawRibbon(ctx, wave, ts, w, h) {
+  const step = 4
+  const points = []
+
+  // Vertical drift — the whole wave floats up and down slowly
+  const drift = Math.sin(ts * wave.driftSpeed + wave.driftPhase) * wave.driftAmp
+
+  for (let x = 0; x <= w; x += step) {
+    // Primary sine + harmonic overtone for organic shape
+    const y = h * 0.5 + drift
+      + Math.sin(x * wave.freq + ts * wave.speed + wave.phase) * wave.amp
+      + Math.sin(x * wave.freq * 2.7 + ts * wave.speed * 1.9 + wave.phase * 1.4) * wave.amp * wave.harmonic
+
+    // Half-width pulses along the line
+    const t01 = 0.5 + 0.5 * Math.sin(x * wave.wFreq + ts * wave.wSpeed + wave.wPhase)
+    const hw  = wave.wMin + (wave.wMax - wave.wMin) * t01
+
+    points.push({ x, y, hw })
+  }
+
+  // Draw ribbon: top edge forward, bottom edge backward
+  ctx.beginPath()
+  ctx.moveTo(points[0].x, points[0].y - points[0].hw)
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y - points[i].hw)
+  }
+  for (let i = points.length - 1; i >= 0; i--) {
+    ctx.lineTo(points[i].x, points[i].y + points[i].hw)
+  }
+  ctx.closePath()
+  ctx.fillStyle = wave.color
+  ctx.fill()
+}
 
 function WaveCanvas() {
   const canvasRef = useRef(null)
@@ -33,20 +105,7 @@ function WaveCanvas() {
       const w = canvas.width
       const h = canvas.height
       ctx.clearRect(0, 0, w, h)
-
-      WAVES.forEach(wave => {
-        ctx.beginPath()
-        ctx.strokeStyle = wave.color
-        ctx.lineWidth   = wave.lw
-        ctx.lineJoin    = 'round'
-
-        for (let x = 0; x <= w; x += 3) {
-          const y = h * 0.5 + Math.sin(x * wave.freq + ts * wave.speed + wave.phase) * wave.amp
-          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-        }
-        ctx.stroke()
-      })
-
+      WAVES.forEach(wave => drawRibbon(ctx, wave, ts, w, h))
       animId = requestAnimationFrame(draw)
     }
 
