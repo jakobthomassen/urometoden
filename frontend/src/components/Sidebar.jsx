@@ -3,9 +3,25 @@ import { WEEKS } from '../data/weeks'
 
 const LIBRARY_ITEMS = [
   { icon: '♪', label: 'Lydfiler – oppmerksomhet', type: 'audio' },
-  { icon: '◎', label: 'Case-filer',               type: 'case' },
+  { icon: '◎', label: 'Case-filer',               type: 'case'  },
   { icon: '▷', label: 'Videoer',                  type: 'video' },
 ]
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  )
+}
 
 function StatusDot({ status }) {
   const cls = { done: styles.dotDone, active: styles.dotActive, locked: styles.dotLocked }
@@ -18,15 +34,25 @@ function WeekBadge({ status }) {
   return <span className={styles.weekBadge}>🔒</span>
 }
 
-export default function Sidebar({ currentWeek }) {
+export default function Sidebar({ currentWeek, collapsed, onToggleCollapse }) {
   const doneCount = WEEKS.filter(w => w.status === 'done').length
   const progress = (doneCount / 8) * 100
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
+
+      <div className={styles.topBar}>
+        <button
+          className={styles.collapseBtn}
+          onClick={onToggleCollapse}
+          title={collapsed ? 'Vis sidebar' : 'Skjul sidebar'}
+        >
+          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </button>
+      </div>
+
       <div className={styles.inner}>
 
-        {/* Progress */}
         <div className={styles.progressBlock}>
           <div className={styles.progHeader}>
             <span className={styles.progName}>Din reise</span>
@@ -40,7 +66,6 @@ export default function Sidebar({ currentWeek }) {
           </div>
         </div>
 
-        {/* Week list */}
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Uroreisen</span>
           {WEEKS.map(week => (
@@ -56,7 +81,6 @@ export default function Sidebar({ currentWeek }) {
           ))}
         </div>
 
-        {/* Library */}
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Utforsk fritt</span>
           {LIBRARY_ITEMS.map(item => (

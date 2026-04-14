@@ -4,23 +4,19 @@
   border-bottom: 0.5px solid var(--border);
   display: flex;
   align-items: center;
-  padding: 0 20px 0 24px;
+  padding: 0 20px 0 20px;
   z-index: 10;
 }
 
 .logo {
-  font-family: var(--font-display);
-  font-size: 19px;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  margin-right: 28px;
+  font-family: var(--font-script);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 24px;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.logoEm {
-  font-style: italic;
-  color: var(--accent);
+  line-height: 1;
 }
 
 .navLinks {
@@ -43,7 +39,7 @@
   transition: background 0.13s, color 0.13s;
   white-space: nowrap;
 }
-.navTab:hover {
+.navTab:hover:not(.disabled) {
   background: var(--surface2);
   color: var(--text);
 }
@@ -51,6 +47,11 @@
   background: var(--surface2);
   color: var(--text);
   font-weight: 500;
+}
+.navTab.disabled {
+  color: var(--text-3);
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .navRight {

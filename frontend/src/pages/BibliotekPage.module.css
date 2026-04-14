@@ -1,0 +1,84 @@
+.main {
+  padding: 28px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-md) transparent;
+}
+
+.header {
+  margin-bottom: 4px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 300;
+}
+
+/* Filter chips */
+.filterBar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--text-2);
+  border: 0.5px solid var(--border-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  white-space: nowrap;
+}
+.filterBtn:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+.filterBtn.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: transparent;
+  font-weight: 500;
+}
+
+/* Content sections */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section {}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}

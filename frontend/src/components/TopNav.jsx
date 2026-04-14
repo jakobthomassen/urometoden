@@ -1,7 +1,12 @@
-import { useState } from 'react'
 import styles from './TopNav.module.css'
 
-const NAV_TABS = ['Hjem', 'Reisen', 'Bibliotek', 'Kurs', 'Uroskolen']
+const NAV_TABS = [
+  { label: 'Hjem',      active: true  },
+  { label: 'Reisen',    active: false },
+  { label: 'Bibliotek', active: true  },
+  { label: 'Kurs',      active: false },
+  { label: 'Uroskolen', active: false },
+]
 
 function SunIcon() {
   return (
@@ -27,23 +32,24 @@ function MoonIcon() {
   )
 }
 
-export default function TopNav({ isDark, onToggleTheme }) {
-  const [activeTab, setActiveTab] = useState('Hjem')
-
+export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }) {
   return (
     <nav className={styles.topnav}>
-      <div className={styles.logo}>
-        Uro<em className={styles.logoEm}>metoden</em>
-      </div>
+      <div className={styles.logo}>Uro</div>
 
       <div className={styles.navLinks}>
         {NAV_TABS.map(tab => (
           <button
-            key={tab}
-            className={`${styles.navTab} ${activeTab === tab ? styles.active : ''}`}
-            onClick={() => setActiveTab(tab)}
+            key={tab.label}
+            disabled={!tab.active}
+            className={[
+              styles.navTab,
+              activePage === tab.label ? styles.active : '',
+              !tab.active ? styles.disabled : '',
+            ].filter(Boolean).join(' ')}
+            onClick={() => tab.active && onNavigate(tab.label)}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
