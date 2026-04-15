@@ -16,8 +16,8 @@ export const WEEK_1 = {
   subtitle: 'Bli kjent med din indre uro',
   audio: {
     src: '/audio/audio1.mp3',
-    type: 'Ukens lydfil · Guidet meditasjon',
-    title: 'Introduksjon til uro',
+    type: 'Ukens lydfil',
+    title: 'Hvordan kan jeg bruke uro som en ressurs?',
     info: 'Uroreisen, uke 1',
   },
   content: [

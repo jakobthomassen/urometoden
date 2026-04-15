@@ -73,6 +73,7 @@ export default function Sidebar({ currentWeek, collapsed, onToggleCollapse, onNa
               key={week.id}
               disabled={week.status === 'locked'}
               className={`${styles.weekItem} ${week.id === currentWeek ? styles.active : ''}`}
+              onClick={() => onNavigate('Uke', week.id)}
             >
               <StatusDot status={week.status} />
               Uke {week.id} – {week.title}
