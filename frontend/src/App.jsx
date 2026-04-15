@@ -3,8 +3,10 @@ import styles from './App.module.css'
 import TopNav from './components/TopNav'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
+import DashboardPage from './pages/DashboardPage'
 import HomePage from './pages/HomePage'
 import BibliotekPage from './pages/BibliotekPage'
+import WelcomeModal from './components/WelcomeModal'
 
 function getInitialDark() {
   const stored = localStorage.getItem('theme')
@@ -16,11 +18,17 @@ export default function App() {
   const [isDark, setIsDark] = useState(getInitialDark)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage] = useState('Hjem')
+  const [activeWeek, setActiveWeek] = useState(1)
   const [bibliotekFilter, setBibliotekFilter] = useState('all')
 
-  function navigate(page, filter) {
+  function navigate(page, data) {
     setActivePage(page)
-    if (filter) setBibliotekFilter(filter)
+    if (page === 'Bibliotek' && data) setBibliotekFilter(data)
+    if (page === 'Uke' && data)       setActiveWeek(data)
+  }
+
+  function navigateToWeek(weekId) {
+    navigate('Uke', weekId)
   }
 
   useEffect(() => {
@@ -28,7 +36,7 @@ export default function App() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  const showRightPanel = activePage === 'Hjem'
+  const showRightPanel = activePage === 'Hjem' || activePage === 'Uke'
 
   const gridClass = [
     styles.app,
@@ -38,6 +46,7 @@ export default function App() {
 
   return (
     <div className={gridClass}>
+      <WelcomeModal onStart={() => navigateToWeek(1)} />
       <TopNav
         isDark={isDark}
         onToggleTheme={() => setIsDark(d => !d)}
@@ -45,12 +54,13 @@ export default function App() {
         onNavigate={navigate}
       />
       <Sidebar
-        currentWeek={1}
+        currentWeek={activeWeek}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         onNavigate={navigate}
       />
-      {activePage === 'Hjem'      && <HomePage />}
+      {activePage === 'Hjem'      && <DashboardPage onNavigateToWeek={navigateToWeek} />}
+      {activePage === 'Uke'       && <HomePage weekId={activeWeek} />}
       {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
       {showRightPanel && <RightPanel />}
     </div>
