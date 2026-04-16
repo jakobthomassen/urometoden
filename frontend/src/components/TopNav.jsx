@@ -33,17 +33,15 @@ function MoonIcon() {
   )
 }
 
-const MENU_ITEMS = [
-  { label: 'Profil' },
-  { label: 'Innstillinger' },
-  { label: 'Personvern' },
-  { label: 'Hjelp og støtte' },
-  { label: 'Logg ut' },
-]
-
+const DISABLED_ITEMS = ['Profil', 'Innstillinger', 'Personvern', 'Hjelp og støtte']
 const POPUP_KEYS = ['uro_visited']
 
-function ProfileMenu({ onClose }) {
+function getInitials(name) {
+  if (!name) return '?'
+  return name.split(' ').slice(0, 2).map(n => n[0].toUpperCase()).join('')
+}
+
+function ProfileMenu({ user, onClose, onLogout }) {
   const [resetDone, setResetDone] = useState(false)
 
   function handleReset() {
@@ -55,20 +53,23 @@ function ProfileMenu({ onClose }) {
   return (
     <div className={styles.menu}>
       <div className={styles.menuHeader}>
-        <div className={styles.menuAvatar}>ON</div>
+        <div className={styles.menuAvatar}>{getInitials(user.name)}</div>
         <div>
-          <div className={styles.menuName}>Ola Nordmann</div>
-          <div className={styles.menuEmail}>user@example.com</div>
+          <div className={styles.menuName}>{user.name}</div>
+          <div className={styles.menuEmail}>{user.email}</div>
         </div>
       </div>
 
       <div className={styles.menuDivider} />
 
-      {MENU_ITEMS.map(item => (
-        <button key={item.label} className={styles.menuItem} disabled>
-          {item.label}
+      {DISABLED_ITEMS.map(label => (
+        <button key={label} className={styles.menuItem} disabled>
+          {label}
         </button>
       ))}
+      <button className={styles.menuItem} onClick={() => { onClose(); onLogout() }}>
+        Logg ut
+      </button>
 
       <div className={styles.menuDivider} />
 
@@ -79,7 +80,7 @@ function ProfileMenu({ onClose }) {
   )
 }
 
-export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }) {
+export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, user, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -130,9 +131,15 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }
             onClick={() => setMenuOpen(o => !o)}
             title="Profil"
           >
-            ON
+            {getInitials(user?.name)}
           </button>
-          {menuOpen && <ProfileMenu onClose={() => setMenuOpen(false)} />}
+          {menuOpen && (
+            <ProfileMenu
+              user={user}
+              onClose={() => setMenuOpen(false)}
+              onLogout={onLogout}
+            />
+          )}
         </div>
       </div>
     </nav>
