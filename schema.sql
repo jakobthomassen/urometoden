@@ -1,10 +1,12 @@
 CREATE TABLE IF NOT EXISTS users (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  email        TEXT    NOT NULL UNIQUE,
-  name         TEXT,
-  display_name TEXT,
-  is_admin     INTEGER NOT NULL DEFAULT 0,
-  created_at   INTEGER NOT NULL
+  id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+  email                 TEXT    NOT NULL UNIQUE,
+  name                  TEXT,
+  display_name          TEXT,
+  is_admin              INTEGER NOT NULL DEFAULT 0,
+  membership            TEXT    NOT NULL DEFAULT 'none',
+  membership_expires_at INTEGER,
+  created_at            INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS identities (
