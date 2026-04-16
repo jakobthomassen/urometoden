@@ -1,12 +1,12 @@
 export const WEEKS = [
-  { id: 1, title: 'Møt uroen',      status: 'active' },
-  { id: 2, title: 'Reaktivitet',    status: 'locked' },
-  { id: 3, title: 'Pust og ro',     status: 'locked' },
-  { id: 4, title: 'Kroppen vet',    status: 'locked' },
-  { id: 5, title: 'Mønstre',        status: 'locked' },
-  { id: 6, title: 'Ressursen',      status: 'locked' },
-  { id: 7, title: 'Integrasjon',    status: 'locked' },
-  { id: 8, title: 'Veien videre',   status: 'locked' },
+  { id: 1, title: 'Møt uroen',     status: 'active', description: 'Bli kjent med din indre uro. Forstå hva den er, og hvorfor den ikke er farlig.' },
+  { id: 2, title: 'Reaktivitet',   status: 'locked', description: 'Lær å gjenkjenne dine automatiske reaksjonsmønstre og hva som trigger dem.' },
+  { id: 3, title: 'Pust og ro',    status: 'locked', description: 'Pusten er ditt raskeste verktøy for å regulere nervesystemet. Her lærer du å bruke den.' },
+  { id: 4, title: 'Kroppen vet',   status: 'locked', description: 'Kroppen registrerer uro lenge før tankene gjør det. Lær å lytte til disse signalene.' },
+  { id: 5, title: 'Mønstre',       status: 'locked', description: 'Se de dypere mønstrene bak uroen din – og begynn å løsne dem forsiktig.' },
+  { id: 6, title: 'Ressursen',     status: 'locked', description: 'Uro inneholder energi. Denne uken lærer du å bruke den konstruktivt.' },
+  { id: 7, title: 'Integrasjon',   status: 'locked', description: 'Sett alt du har lært sammen til en personlig praksis du faktisk kan holde.' },
+  { id: 8, title: 'Veien videre',  status: 'locked', description: 'Reisen slutter ikke her. Bygg en plan for livet etter Urometoden.' },
 ]
 
 export const WEEK_1 = {

@@ -1,8 +1,9 @@
+import { useState, useRef, useEffect } from 'react'
 import styles from './TopNav.module.css'
 
 const NAV_TABS = [
   { label: 'Hjem',      active: true  },
-  { label: 'Reisen',    active: false },
+  { label: 'Reisen',    active: true  },
   { label: 'Bibliotek', active: true  },
   { label: 'Kurs',      active: false },
   { label: 'Uroskolen', active: false },
@@ -32,7 +33,67 @@ function MoonIcon() {
   )
 }
 
+const MENU_ITEMS = [
+  { label: 'Profil' },
+  { label: 'Innstillinger' },
+  { label: 'Personvern' },
+  { label: 'Hjelp og støtte' },
+  { label: 'Logg ut' },
+]
+
+const POPUP_KEYS = ['uro_visited']
+
+function ProfileMenu({ onClose }) {
+  const [resetDone, setResetDone] = useState(false)
+
+  function handleReset() {
+    POPUP_KEYS.forEach(k => localStorage.removeItem(k))
+    setResetDone(true)
+    setTimeout(() => setResetDone(false), 2000)
+  }
+
+  return (
+    <div className={styles.menu}>
+      <div className={styles.menuHeader}>
+        <div className={styles.menuAvatar}>BL</div>
+        <div>
+          <div className={styles.menuName}>Bjørn Lie</div>
+          <div className={styles.menuEmail}>bjorn@example.com</div>
+        </div>
+      </div>
+
+      <div className={styles.menuDivider} />
+
+      {MENU_ITEMS.map(item => (
+        <button key={item.label} className={styles.menuItem} disabled>
+          {item.label}
+        </button>
+      ))}
+
+      <div className={styles.menuDivider} />
+
+      <button className={styles.menuItemReset} onClick={handleReset}>
+        {resetDone ? 'Tilbakestilt ✓' : 'Tilbakestill pop-ups'}
+      </button>
+    </div>
+  )
+}
+
 export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
+
   return (
     <nav className={styles.topnav}>
       <button className={styles.logo} onClick={() => onNavigate('Hjem')}>Uro</button>
@@ -44,7 +105,7 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }
             disabled={!tab.active}
             className={[
               styles.navTab,
-              activePage === tab.label ? styles.active : '',
+              (activePage === tab.label || (tab.label === 'Reisen' && activePage === 'Uke')) ? styles.active : '',
               !tab.active ? styles.disabled : '',
             ].filter(Boolean).join(' ')}
             onClick={() => tab.active && onNavigate(tab.label)}
@@ -63,7 +124,16 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }
           {isDark ? <SunIcon /> : <MoonIcon />}
         </button>
         <span className={styles.trialBadge}>7 dager gratis</span>
-        <div className={styles.avatar} title="Profil">BL</div>
+        <div className={styles.avatarWrapper} ref={menuRef}>
+          <button
+            className={`${styles.avatar} ${menuOpen ? styles.avatarOpen : ''}`}
+            onClick={() => setMenuOpen(o => !o)}
+            title="Profil"
+          >
+            BL
+          </button>
+          {menuOpen && <ProfileMenu onClose={() => setMenuOpen(false)} />}
+        </div>
       </div>
     </nav>
   )
