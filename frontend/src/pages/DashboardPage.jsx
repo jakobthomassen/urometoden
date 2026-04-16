@@ -1,5 +1,4 @@
 import styles from './DashboardPage.module.css'
-import { WEEKS } from '../data/weeks'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -21,9 +20,9 @@ function getDailyTip() {
   return TIPS[day % TIPS.length]
 }
 
-export default function DashboardPage({ onNavigateToWeek }) {
-  const activeWeek = WEEKS.find(w => w.status === 'active') ?? WEEKS[0]
-  const doneCount  = WEEKS.filter(w => w.status === 'done').length
+export default function DashboardPage({ weeks = [], onNavigateToWeek }) {
+  const activeWeek = weeks.find(w => w.status === 'active') ?? weeks[0] ?? { id: 1, title: '…' }
+  const doneCount  = weeks.filter(w => w.status === 'done').length
   const progress   = (doneCount / 8) * 100
 
   return (

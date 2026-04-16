@@ -5,6 +5,21 @@
   padding: 15px 16px;
   cursor: pointer;
   transition: border-color 0.14s, box-shadow 0.14s, transform 0.12s;
+  position: relative;
+}
+
+.completed {
+  border-color: var(--accent);
+}
+
+.check {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  line-height: 1;
 }
 .card:hover {
   border-color: var(--border-md);

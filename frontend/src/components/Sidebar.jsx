@@ -1,5 +1,4 @@
 import styles from './Sidebar.module.css'
-import { WEEKS } from '../data/weeks'
 
 const LIBRARY_ITEMS = [
   { icon: '♪', label: 'Lydfiler',    type: 'audio'   },
@@ -35,9 +34,9 @@ function WeekBadge({ status }) {
   return <span className={styles.weekBadge}>🔒</span>
 }
 
-export default function Sidebar({ currentWeek, collapsed, onToggleCollapse, onNavigate }) {
-  const doneCount = WEEKS.filter(w => w.status === 'done').length
-  const progress = (doneCount / 8) * 100
+export default function Sidebar({ weeks = [], currentWeek, collapsed, onToggleCollapse, onNavigate }) {
+  const doneCount = weeks.filter(w => w.status === 'done').length
+  const progress  = (doneCount / 8) * 100
 
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
@@ -69,7 +68,7 @@ export default function Sidebar({ currentWeek, collapsed, onToggleCollapse, onNa
 
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Uroreisen</span>
-          {WEEKS.map(week => (
+          {weeks.map(week => (
             <button
               key={week.id}
               disabled={week.status === 'locked'}
