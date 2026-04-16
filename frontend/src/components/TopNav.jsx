@@ -80,9 +80,41 @@ function ProfileMenu({ user, onClose, onLogout }) {
   )
 }
 
+function useMembershipLabel(user) {
+  const [label, setLabel] = useState('')
+  const [type, setType]   = useState('none')
+
+  useEffect(() => {
+    function compute() {
+      const { membership, membership_expires_at: exp } = user ?? {}
+      if (membership === 'member') {
+        setLabel('Medlem'); setType('member'); return
+      }
+      if (membership === 'trial' && exp > Date.now()) {
+        const ms    = exp - Date.now()
+        const hours = ms / (1000 * 60 * 60)
+        if (hours < 24) {
+          setLabel(`${Math.ceil(hours)}t igjen`)
+        } else {
+          setLabel(`${Math.ceil(hours / 24)} dager igjen`)
+        }
+        setType('trial')
+        return
+      }
+      setLabel('Ikke medlem'); setType('none')
+    }
+    compute()
+    const id = setInterval(compute, 60_000)
+    return () => clearInterval(id)
+  }, [user])
+
+  return { label, type }
+}
+
 export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, user, onLogout }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef(null)
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const menuRef                     = useRef(null)
+  const { label: memberLabel, type: memberType } = useMembershipLabel(user)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -124,7 +156,12 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, 
         >
           {isDark ? <SunIcon /> : <MoonIcon />}
         </button>
-        <span className={styles.trialBadge}>7 dager gratis</span>
+        <button
+          className={`${styles.memberBadge} ${styles[`memberBadge_${memberType}`]}`}
+          onClick={() => alert('Her vil du bli sendt til fakturasiden. Denne siden er ikke tilgjengelig ennå.')}
+        >
+          {memberLabel}
+        </button>
         <div className={styles.avatarWrapper} ref={menuRef}>
           <button
             className={`${styles.avatar} ${menuOpen ? styles.avatarOpen : ''}`}

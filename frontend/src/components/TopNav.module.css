@@ -84,15 +84,35 @@
   color: var(--text);
 }
 
-.trialBadge {
+.memberBadge {
   font-size: 11px;
   font-weight: 500;
-  background: var(--accent-2-bg);
-  color: var(--amber);
   padding: 4px 10px;
   border-radius: 20px;
-  border: 0.5px solid rgba(196,164,107,0.3);
+  border: 0.5px solid transparent;
   white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.12s;
+  background: none;
+}
+.memberBadge:hover { opacity: 0.75; }
+
+.memberBadge_trial {
+  background: var(--accent-2-bg);
+  color: var(--amber);
+  border-color: rgba(196,164,107,0.3);
+}
+
+.memberBadge_member {
+  background: color-mix(in srgb, var(--done) 12%, transparent);
+  color: var(--done);
+  border-color: color-mix(in srgb, var(--done) 30%, transparent);
+}
+
+.memberBadge_none {
+  background: var(--surface2);
+  color: var(--text-3);
+  border-color: var(--border-md);
 }
 
 .avatarWrapper {
