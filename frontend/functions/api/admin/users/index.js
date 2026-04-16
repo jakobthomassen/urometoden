@@ -1,4 +1,4 @@
-import { requireAdmin } from '../../../../lib/auth.js'
+import { requireAdmin } from '../../../lib/auth.js'
 
 export async function onRequestGet({ env, request }) {
   if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
