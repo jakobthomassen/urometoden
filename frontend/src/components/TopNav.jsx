@@ -55,10 +55,10 @@ function ProfileMenu({ onClose }) {
   return (
     <div className={styles.menu}>
       <div className={styles.menuHeader}>
-        <div className={styles.menuAvatar}>BL</div>
+        <div className={styles.menuAvatar}>ON</div>
         <div>
-          <div className={styles.menuName}>Bjørn Lie</div>
-          <div className={styles.menuEmail}>bjorn@example.com</div>
+          <div className={styles.menuName}>Ola Nordmann</div>
+          <div className={styles.menuEmail}>user@example.com</div>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate }
             onClick={() => setMenuOpen(o => !o)}
             title="Profil"
           >
-            BL
+            ON
           </button>
           {menuOpen && <ProfileMenu onClose={() => setMenuOpen(false)} />}
         </div>

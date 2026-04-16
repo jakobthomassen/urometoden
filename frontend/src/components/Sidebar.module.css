@@ -191,6 +191,7 @@
   font-size: 12px;
   flex-shrink: 0;
 }
-.audio { background: var(--color-audio-bg); color: var(--color-audio-fg); }
-.case  { background: var(--color-case-bg);  color: var(--color-case-fg); }
-.video { background: var(--color-video-bg); color: var(--color-video-fg); }
+.audio   { background: var(--color-audio-bg); color: var(--color-audio-fg); }
+.case    { background: var(--color-case-bg);  color: var(--color-case-fg); }
+.reflect { background: var(--accent-bg);      color: var(--accent); }
+.video   { background: var(--color-video-bg); color: var(--color-video-fg); }
