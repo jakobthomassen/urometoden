@@ -1,21 +1,57 @@
 # TODO
 
+### Auth schema migration — multi-provider ready
+
+Current `users` table has `google_id NOT NULL` — blocks any non-Google auth provider. Migrate before adding Apple or email/password auth.
+
+**Target schema:**
+```sql
+CREATE TABLE users (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  email        TEXT    NOT NULL UNIQUE,
+  name         TEXT,
+  display_name TEXT,
+  is_admin     INTEGER NOT NULL DEFAULT 0,
+  created_at   INTEGER NOT NULL
+);
+
+CREATE TABLE identities (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider    TEXT    NOT NULL, -- 'google' | 'apple' | 'email'
+  provider_id TEXT    NOT NULL, -- google sub, apple sub, or email address
+  credential  TEXT,             -- NULL for OAuth, password hash for email/pw
+  created_at  INTEGER NOT NULL,
+  UNIQUE(provider, provider_id)
+);
+```
+
+**Migration steps:**
+1. Create `identities` table
+2. Backfill: insert one row per existing user (`provider = 'google'`, `provider_id = google_id`)
+3. Drop `google_id` column from `users`
+4. Update auth functions to look up `identities` instead of `users.google_id`
+
+**Notes:**
+- Apple only provides name and email on the first sign-in — must persist on first auth.
+- Email+password requires PBKDF2 hashing (Web Crypto), email verification, and password reset — scope separately from OAuth.
+
+**Account linking and merge**
+A user may sign up on web with Google, then sign up on the app with Apple — creating two separate `users` rows. When they link accounts, the two must be merged:
+
+1. User initiates "Connect Google" while logged in with Apple (or vice versa)
+2. OAuth completes — look up the email in `users` to find the existing account
+3. Reassign the incoming `identities` row to the existing `user_id`
+4. Migrate all data from the orphaned `user_id` — `user_progress`, `user_reflections`, `sessions`
+5. Delete the orphaned `users` row
+
+Merge conflicts need a defined strategy — e.g. if both accounts have progress on week 1, keep the most recent `completed_at`. Define this before implementing.
+
+Apple relay emails (`privaterelay.appleid.com`) cannot be matched to a Google account automatically — auto-linking is not reliable. Manual linking from account settings is the safe path. Surface "Connected accounts" in the profile page.
+
+**Coordinate with the app team before they implement Apple Sign-In** — retrofitting the `identities` schema and merge flow after launch is significantly harder.
+
 ---
-
-## Completed
-
-<details>
-<summary>▶ Google Identity Services Auth</summary>
-
-All app content is protected behind Google Sign-In. Unauthenticated users see the onboarding/landing page. After sign-in, users are upserted into the `users` D1 table and issued a 30-day signed JWT session cookie. The profile dropdown shows real name and email pulled from the JWT. Logout clears the cookie and returns to the onboarding page.
-
-Admin access is controlled by an `is_admin` flag in the `users` table, set manually via `wrangler d1 execute`.
-
-</details>
-
----
-
-## Pending
 
 ### Security hardening
 

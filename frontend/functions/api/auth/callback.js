@@ -36,18 +36,27 @@ export async function onRequestGet({ env, request }) {
   })
   const googleUser = await userRes.json()
 
-  // Upsert user in D1
-  await env.DB.prepare(`
-    INSERT INTO users (google_id, email, name, created_at)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(google_id) DO UPDATE SET email = excluded.email, name = excluded.name
-  `).bind(googleUser.sub, googleUser.email, googleUser.name, Date.now()).run()
+  const now = Date.now()
 
-  const user = await env.DB.prepare('SELECT * FROM users WHERE google_id = ?')
-    .bind(googleUser.sub).first()
+  // Upsert user by email
+  await env.DB.prepare(`
+    INSERT INTO users (email, name, created_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(email) DO UPDATE SET name = excluded.name
+  `).bind(googleUser.email, googleUser.name, now).run()
+
+  const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?')
+    .bind(googleUser.email).first()
+
+  // Upsert identity row
+  await env.DB.prepare(`
+    INSERT INTO identities (user_id, provider, provider_id, created_at)
+    VALUES (?, 'google', ?, ?)
+    ON CONFLICT(provider, provider_id) DO NOTHING
+  `).bind(user.id, googleUser.sub, now).run()
 
   // Sign session JWT (30 days)
-  const token  = await signJwt(
+  const token = await signJwt(
     { sub: user.id, email: user.email, name: user.name, is_admin: user.is_admin },
     env.AUTH_SECRET
   )
