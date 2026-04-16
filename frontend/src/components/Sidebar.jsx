@@ -2,9 +2,10 @@ import styles from './Sidebar.module.css'
 import { WEEKS } from '../data/weeks'
 
 const LIBRARY_ITEMS = [
-  { icon: '♪', label: 'Lydfiler – oppmerksomhet', type: 'audio' },
-  { icon: '◎', label: 'Case-filer',               type: 'case'  },
-  { icon: '▷', label: 'Videoer',                  type: 'video' },
+  { icon: '♪', label: 'Lydfiler',    type: 'audio'   },
+  { icon: '◎', label: 'Case-filer',  type: 'case'    },
+  { icon: '✎', label: 'Refleksjon',  type: 'reflect' },
+  { icon: '▷', label: 'Videoer',     type: 'video'   },
 ]
 
 function ChevronLeftIcon() {

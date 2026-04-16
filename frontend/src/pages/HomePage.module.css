@@ -47,3 +47,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+
+.loading {
+  font-size: 13px;
+  color: var(--text-3);
+  padding: 12px 0;
+}
