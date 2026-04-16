@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage'
 import BibliotekPage from './pages/BibliotekPage'
 import WelcomeModal from './components/WelcomeModal'
 import OnboardingPage from './pages/OnboardingPage'
+import AdminPage from './pages/AdminPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
 
 function getInitialDark() {
@@ -55,6 +56,11 @@ export default function App() {
 
   if (user === undefined) return null
   if (user === null) return <OnboardingPage />
+
+  if (window.location.pathname === '/admin') {
+    if (!user.is_admin) { window.location.replace('/'); return null }
+    return <AdminPage user={user} onLogout={handleLogout} />
+  }
 
   const showRightPanel = activePage === 'Hjem' || activePage === 'Uke' || activePage === 'Reisen'
 
