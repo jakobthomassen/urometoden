@@ -8,6 +8,7 @@ import JourneyPage from './pages/JourneyPage'
 import HomePage from './pages/HomePage'
 import BibliotekPage from './pages/BibliotekPage'
 import WelcomeModal from './components/WelcomeModal'
+import OnboardingPage from './pages/OnboardingPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
 
 function getInitialDark() {
@@ -17,12 +18,25 @@ function getInitialDark() {
 }
 
 export default function App() {
-  const [isDark, setIsDark] = useState(getInitialDark)
+  const [user, setUser]                         = useState(undefined) // undefined=loading, null=unauthed, obj=authed
+  const [isDark, setIsDark]                     = useState(getInitialDark)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [activePage, setActivePage] = useState('Hjem')
-  const [activeWeek, setActiveWeek] = useState(1)
-  const [bibliotekFilter, setBibliotekFilter] = useState('all')
-  const { weeks, refresh: refreshProgress } = useWeekProgress()
+  const [activePage, setActivePage]             = useState('Hjem')
+  const [activeWeek, setActiveWeek]             = useState(1)
+  const [bibliotekFilter, setBibliotekFilter]   = useState('all')
+  const { weeks, refresh: refreshProgress }     = useWeekProgress()
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(u => setUser(u))
+      .catch(() => setUser(null))
+  }, [])
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setUser(null)
+  }
 
   function navigate(page, data) {
     setActivePage(page)
@@ -38,6 +52,9 @@ export default function App() {
     document.documentElement.classList.toggle('dark', isDark)
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }, [isDark])
+
+  if (user === undefined) return null
+  if (user === null) return <OnboardingPage />
 
   const showRightPanel = activePage === 'Hjem' || activePage === 'Uke' || activePage === 'Reisen'
 
@@ -55,6 +72,8 @@ export default function App() {
         onToggleTheme={() => setIsDark(d => !d)}
         activePage={activePage}
         onNavigate={navigate}
+        user={user}
+        onLogout={handleLogout}
       />
       <Sidebar
         weeks={weeks}

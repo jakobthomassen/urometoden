@@ -2,6 +2,12 @@ name = "urometoden"
 compatibility_date = "2024-11-01"
 pages_build_output_dir = "./dist"
 
+# Non-secret env vars
+# GOOGLE_CLIENT_SECRET and AUTH_SECRET must be set as secrets in the Cloudflare dashboard
+# Pages project → Settings → Environment variables
+[vars]
+GOOGLE_CLIENT_ID = "1058838331538-jg3fp1rtmb1ubcf6gc019rd82uv1fl4s.apps.googleusercontent.com"
+
 [[r2_buckets]]
 binding = 'AUDIO_BUCKET'
 bucket_name = 'audio-files'
