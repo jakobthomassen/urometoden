@@ -1,4 +1,4 @@
-import { requireAdmin } from '../../../../lib/auth.js'
+import { requireAdmin } from '../../../lib/auth.js'
 
 const ALLOWED = ['is_admin', 'membership', 'membership_expires_at']
 
