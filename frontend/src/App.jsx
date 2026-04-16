@@ -4,6 +4,7 @@ import TopNav from './components/TopNav'
 import Sidebar from './components/Sidebar'
 import RightPanel from './components/RightPanel'
 import DashboardPage from './pages/DashboardPage'
+import JourneyPage from './pages/JourneyPage'
 import HomePage from './pages/HomePage'
 import BibliotekPage from './pages/BibliotekPage'
 import WelcomeModal from './components/WelcomeModal'
@@ -36,7 +37,7 @@ export default function App() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  const showRightPanel = activePage === 'Hjem' || activePage === 'Uke'
+  const showRightPanel = activePage === 'Hjem' || activePage === 'Uke' || activePage === 'Reisen'
 
   const gridClass = [
     styles.app,
@@ -60,6 +61,7 @@ export default function App() {
         onNavigate={navigate}
       />
       {activePage === 'Hjem'      && <DashboardPage onNavigateToWeek={navigateToWeek} />}
+      {activePage === 'Reisen'    && <JourneyPage onNavigateToWeek={navigateToWeek} />}
       {activePage === 'Uke'       && <HomePage weekId={activeWeek} />}
       {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
       {showRightPanel && <RightPanel />}
