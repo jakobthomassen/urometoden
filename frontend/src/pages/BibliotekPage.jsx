@@ -25,7 +25,8 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
   const [activeReflection, setActiveReflection] = useState(null)
   const [activeCase, setActiveCase]       = useState(null)
 
-  useEffect(() => { setFilter(initialFilter) }, [initialFilter])
+  // Sync filter from parent (sidebar navigation) without a separate fetch effect
+  useEffect(() => { setFilter(initialFilter ?? 'all') }, [initialFilter])
 
   useEffect(() => {
     setLoading(true)

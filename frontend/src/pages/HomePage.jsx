@@ -7,29 +7,56 @@ import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
 import { WEEK_1, WEEKS } from '../data/weeks'
 import { SECTION_META } from '../data/library'
+import { startWeek, completeItem, getCompletedItems, devUnlockNext } from '../utils/progress'
 
-export default function HomePage({ weekId = 1 }) {
-  const weekMeta   = WEEKS.find(w => w.id === weekId) ?? WEEKS[0]
-  const week1Data  = weekId === 1 ? WEEK_1 : null   // static detail only exists for week 1 for now
+export default function HomePage({ weekId = 1, onProgressChange }) {
+  const weekMeta  = WEEKS.find(w => w.id === weekId) ?? WEEKS[0]
+  const week1Data = weekId === 1 ? WEEK_1 : null
 
-  const [content, setContent]             = useState([])
-  const [loading, setLoading]             = useState(true)
+  const [content, setContent]                   = useState([])
+  const [loading, setLoading]                   = useState(true)
+  const [completedItems, setCompletedItems]     = useState(() => getCompletedItems(weekId))
   const [activeReflection, setActiveReflection] = useState(null)
-  const [activeCase, setActiveCase]       = useState(null)
+  const [activeCase, setActiveCase]             = useState(null)
+
+  // Record that the user opened this week
+  useEffect(() => { startWeek(weekId) }, [weekId])
 
   useEffect(() => {
     setLoading(true)
+    setCompletedItems(getCompletedItems(weekId))
     fetch(`/api/weeks/${weekId}/content`)
       .then(r => r.json())
       .then(items => setContent(items))
       .finally(() => setLoading(false))
   }, [weekId])
 
+  function markComplete(itemId) {
+    const allIds = content.map(i => i.id)
+    const { allDone } = completeItem(weekId, itemId, allIds)
+    setCompletedItems(getCompletedItems(weekId))
+    if (allDone) onProgressChange?.()
+  }
+
+  function handleDevUnlock() {
+    devUnlockNext(weekId)
+    onProgressChange?.()
+  }
+
+  const allComplete = content.length > 0 && content.every(i => completedItems.includes(i.id))
+  const hasNextWeek = weekId < 8
+
   return (
     <main className={styles.main}>
 
-      <ReflectionModal item={activeReflection} onClose={() => setActiveReflection(null)} />
-      <CaseModal       item={activeCase}        onClose={() => setActiveCase(null)} />
+      <ReflectionModal
+        item={activeReflection}
+        onClose={() => setActiveReflection(null)}
+      />
+      <CaseModal
+        item={activeCase}
+        onClose={() => setActiveCase(null)}
+      />
 
       <div className={styles.header}>
         <div className={styles.weekLabel}>Uke {weekMeta.id} av 8</div>
@@ -59,11 +86,12 @@ export default function HomePage({ weekId = 1 }) {
                 label={SECTION_META[item.type]?.tag ?? item.type}
                 title={item.title}
                 meta={item.meta}
-                onClick={
-                  item.type === 'reflect' ? () => setActiveReflection(item)
-                  : item.type === 'case'  ? () => setActiveCase(item)
-                  : undefined
-                }
+                completed={completedItems.includes(item.id)}
+                onClick={() => {
+                  markComplete(item.id)
+                  if (item.type === 'reflect') setActiveReflection(item)
+                  else if (item.type === 'case') setActiveCase(item)
+                }}
               />
             ))}
           </div>
@@ -72,6 +100,16 @@ export default function HomePage({ weekId = 1 }) {
 
       {week1Data && (
         <AboutCard heading={week1Data.aboutStrong} body={week1Data.about} />
+      )}
+
+      {allComplete && hasNextWeek && (
+        <div className={styles.devUnlock}>
+          <span className={styles.devLabel}>DEV</span>
+          <span className={styles.devText}>Alle moduler fullført.</span>
+          <button className={styles.devBtn} onClick={handleDevUnlock}>
+            Lås opp uke {weekId + 1} nå
+          </button>
+        </div>
       )}
 
     </main>

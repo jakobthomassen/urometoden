@@ -176,6 +176,12 @@
   opacity: 0.6;
 }
 
+.unlockHint {
+  font-size: 11px;
+  color: var(--amber);
+  margin-top: 6px;
+}
+
 /* Arrow */
 .weekArrow {
   color: var(--text-3);

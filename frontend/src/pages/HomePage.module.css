@@ -53,3 +53,46 @@
   color: var(--text-3);
   padding: 12px 0;
 }
+
+.devUnlock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px dashed var(--border-md);
+  border-radius: var(--radius);
+  background: transparent;
+}
+
+.devLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  padding: 2px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.devText {
+  font-size: 12px;
+  color: var(--text-3);
+  flex: 1;
+}
+
+.devBtn {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--amber);
+  background: transparent;
+  border: 1px solid var(--amber);
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+.devBtn:hover {
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+}

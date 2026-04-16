@@ -7,12 +7,13 @@ const typeClass = {
   video:   styles.typeVideo,
 }
 
-export default function ContentCard({ type, label, title, meta, onClick }) {
+export default function ContentCard({ type, label, title, meta, onClick, completed = false }) {
   return (
-    <div className={styles.card} onClick={onClick}>
+    <div className={`${styles.card} ${completed ? styles.completed : ''}`} onClick={onClick}>
       <div className={`${styles.tag} ${typeClass[type] || ''}`}>{label}</div>
       <div className={styles.title}>{title}</div>
       <div className={styles.meta}>{meta}</div>
+      {completed && <span className={styles.check} aria-label="Fullført">✓</span>}
     </div>
   )
 }

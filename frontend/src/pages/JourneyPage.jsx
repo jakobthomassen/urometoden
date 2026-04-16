@@ -1,5 +1,4 @@
 import styles from './JourneyPage.module.css'
-import { WEEKS } from '../data/weeks'
 
 function CheckIcon() {
   return (
@@ -26,8 +25,8 @@ function ArrowIcon() {
   )
 }
 
-export default function JourneyPage({ onNavigateToWeek }) {
-  const doneCount = WEEKS.filter(w => w.status === 'done').length
+export default function JourneyPage({ weeks = [], onNavigateToWeek }) {
+  const doneCount = weeks.filter(w => w.status === 'done').length
   const progress  = (doneCount / 8) * 100
 
   return (
@@ -46,10 +45,11 @@ export default function JourneyPage({ onNavigateToWeek }) {
       </div>
 
       <div className={styles.weekList}>
-        {WEEKS.map((week, i) => {
+        {weeks.map((week, i) => {
           const isDone   = week.status === 'done'
           const isActive = week.status === 'active'
           const isLocked = week.status === 'locked'
+          const days     = week.daysUntilUnlock
 
           return (
             <button
@@ -65,15 +65,20 @@ export default function JourneyPage({ onNavigateToWeek }) {
             >
               <div className={styles.weekLeft}>
                 <div className={`${styles.badge} ${isDone ? styles.badgeDone : isActive ? styles.badgeActive : styles.badgeLocked}`}>
-                  {isDone   ? <CheckIcon /> : isLocked ? <LockIcon /> : week.id}
+                  {isDone ? <CheckIcon /> : isLocked ? <LockIcon /> : week.id}
                 </div>
-                <div className={styles.connector} data-last={i === WEEKS.length - 1 || undefined} />
+                <div className={styles.connector} data-last={i === weeks.length - 1 || undefined} />
               </div>
 
               <div className={styles.weekContent}>
                 <div className={styles.weekMeta}>Uke {week.id}</div>
                 <div className={styles.weekTitle}>{week.title}</div>
                 <div className={styles.weekDesc}>{week.description}</div>
+                {isLocked && days !== null && (
+                  <div className={styles.unlockHint}>
+                    {days === 0 ? 'Åpner i dag kl. 10:00' : `Åpner om ${days} dag${days !== 1 ? 'er' : ''} kl. 10:00`}
+                  </div>
+                )}
               </div>
 
               {!isLocked && (

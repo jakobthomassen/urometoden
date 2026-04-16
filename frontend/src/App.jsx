@@ -8,6 +8,7 @@ import JourneyPage from './pages/JourneyPage'
 import HomePage from './pages/HomePage'
 import BibliotekPage from './pages/BibliotekPage'
 import WelcomeModal from './components/WelcomeModal'
+import { useWeekProgress } from './hooks/useWeekProgress'
 
 function getInitialDark() {
   const stored = localStorage.getItem('theme')
@@ -21,6 +22,7 @@ export default function App() {
   const [activePage, setActivePage] = useState('Hjem')
   const [activeWeek, setActiveWeek] = useState(1)
   const [bibliotekFilter, setBibliotekFilter] = useState('all')
+  const { weeks, refresh: refreshProgress } = useWeekProgress()
 
   function navigate(page, data) {
     setActivePage(page)
@@ -55,14 +57,15 @@ export default function App() {
         onNavigate={navigate}
       />
       <Sidebar
+        weeks={weeks}
         currentWeek={activeWeek}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         onNavigate={navigate}
       />
-      {activePage === 'Hjem'      && <DashboardPage onNavigateToWeek={navigateToWeek} />}
-      {activePage === 'Reisen'    && <JourneyPage onNavigateToWeek={navigateToWeek} />}
-      {activePage === 'Uke'       && <HomePage weekId={activeWeek} />}
+      {activePage === 'Hjem'      && <DashboardPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
+      {activePage === 'Reisen'    && <JourneyPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
+      {activePage === 'Uke'       && <HomePage weekId={activeWeek} onProgressChange={refreshProgress} />}
       {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
       {showRightPanel && <RightPanel />}
     </div>
