@@ -27,6 +27,12 @@ export default function OnboardingPage() {
         <p className={styles.terms}>
           Ved å fortsette godtar du våre vilkår og personvernregler.
         </p>
+
+        <div className={styles.devBanner}>
+          <strong>Under utvikling</strong>
+          <br />
+          Denne siden er under aktiv utvikling. Design og innhold er ikke endelig.
+        </div>
       </div>
     </div>
   )

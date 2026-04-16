@@ -1,64 +1,117 @@
 # TODO
 
-## User authentication — Google Sign-In
+---
 
-Protect all app content behind Google Sign-In. Unauthenticated users see only the onboarding/landing page.
+## Completed
 
-**Google OAuth client:**
-- Update the existing client's redirect URI to `https://yourdomain.com/api/auth/callback`
-- No need to delete and recreate
+<details>
+<summary>▶ Google Identity Services Auth</summary>
 
-**DB schema addition:**
+All app content is protected behind Google Sign-In. Unauthenticated users see the onboarding/landing page. After sign-in, users are upserted into the `users` D1 table and issued a 30-day signed JWT session cookie. The profile dropdown shows real name and email pulled from the JWT. Logout clears the cookie and returns to the onboarding page.
+
+Admin access is controlled by an `is_admin` flag in the `users` table, set manually via `wrangler d1 execute`.
+
+</details>
+
+---
+
+## Pending
+
+### Security hardening
+
+**Unprotected API endpoints**
+`/api/content` and `/api/weeks/[weekId]/content` have no auth check — content is publicly readable via direct API call even though the UI is gated. Add JWT verification to all API functions, either inline or via a shared middleware helper in `functions/lib/`.
+
+**Stale `is_admin` in JWT**
+Promoting or demoting an admin has no effect until their 30-day token expires. Options: shorten JWT expiry (e.g. 1 hour + refresh token), or do a DB lookup on `is_admin` for admin-only endpoints rather than trusting the JWT claim.
+
+**Rate limiting on auth endpoints**
+`/api/auth/google` and `/api/auth/callback` are open to abuse. No code change needed — configure via Cloudflare dashboard → Security → Rate Limiting.
+
+**Session revocation**
+No way to invalidate a specific session (compromised account, logout-all-devices). Requires a `sessions` table in D1 checked on each `/api/auth/me` request.
+
 ```sql
-CREATE TABLE users (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  google_id  TEXT NOT NULL UNIQUE,
-  email      TEXT NOT NULL,
-  name       TEXT,
-  is_admin   INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL
+CREATE TABLE sessions (
+  id         TEXT    PRIMARY KEY,  -- random UUID
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  revoked    INTEGER NOT NULL DEFAULT 0
 );
 ```
 
-**Session:** JWT in `httpOnly` cookie, signed with `AUTH_SECRET` env var (set in Cloudflare Pages → Settings → Environment variables).
-
-**Pages Functions:**
-- `GET /api/auth/google` — redirects to Google OAuth URL
-- `GET /api/auth/callback` — exchanges code, upserts user in D1, signs JWT, sets cookie, redirects to `/`
-- `GET /api/auth/me` — reads cookie, returns `{ id, email, name, is_admin }` or 401
-- `POST /api/auth/logout` — clears cookie
-
-**Frontend:**
-- `App.jsx` — call `/api/auth/me` on load; if 401 → show `OnboardingPage`, else show current app
-- New `OnboardingPage.jsx` — landing page with "Fortsett med Google" button
-- Pass user object down to components that need it (e.g. TopNav for name/avatar)
-
-**Admin access:**
-- `is_admin` flag in `users` table (0/1)
-- Set manually: `wrangler d1 execute urometoden-db --remote --command "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com'"`
-- Pages Functions serving `/admin*` check `is_admin` from JWT before responding
-
-**Replaces:** the Cloudflare Access approach for admin (see below) — admin is now gated by `is_admin` flag + same Google Sign-In flow, no separate Zero Trust setup needed.
+Store session ID in the JWT, check it against the table on each request. Revoke by setting `revoked = 1`.
 
 ---
 
-## Admin page
+### Performance
 
-Simple internal dashboard for content management. Gated by `is_admin` flag (see auth above).
+**`/api/auth/me` blocks first render**
+Every page load waits for a round trip before anything renders. Store a non-authoritative user hint in localStorage on sign-in. On load, render immediately from the hint while the `/api/auth/me` call confirms. If the call returns 401, clear the hint and show `OnboardingPage`.
 
-**Initial features:**
-- Add / list / delete tips (Dagens tanke)
-- Possibly: add content items
-
-**Implement together with auth.**
+**No cache headers on content API**
+Week content and library items are static. Add `Cache-Control: public, max-age=3600` to `/api/content` and `/api/weeks/[weekId]/content` responses so Cloudflare caches them at the edge. Invalidate on content changes.
 
 ---
 
-## Dagens tanke — rotating tips system
+### User progress — DB migration
 
-Replace the hardcoded `TIPS` array in `DashboardPage.jsx` with a DB-backed rotation system.
+Move all progress tracking from localStorage to D1. localStorage is per-device and lost on clear; DB-backed progress follows the user across devices.
 
-**DB schema addition:**
+**What needs migrating:**
+- Week start timestamps (currently `week_progress` in localStorage)
+- Completed item IDs per week
+- Reflection text per item
+
+**Revise the definition of "completed":**
+- Currently: any click on a card marks it complete.
+- Consider: explicit "Merk som fullført" button, minimum listening time for audio, or a combination.
+- Decision needed before migration — the schema should reflect the final completion model.
+
+**Schema additions (draft):**
+```sql
+CREATE TABLE user_progress (
+  user_id     INTEGER NOT NULL REFERENCES users(id),
+  week_id     INTEGER NOT NULL,
+  item_id     TEXT    NOT NULL REFERENCES content_items(id),
+  completed_at INTEGER,          -- NULL = started but not complete
+  listen_seconds INTEGER,        -- for audio items
+  PRIMARY KEY (user_id, week_id, item_id)
+);
+
+CREATE TABLE user_reflections (
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  item_id    TEXT    NOT NULL REFERENCES content_items(id),
+  body       TEXT,
+  updated_at INTEGER,
+  PRIMARY KEY (user_id, item_id)
+);
+```
+
+**Benched until:** completion model is decided.
+
+---
+
+### Admin dashboard
+
+Internal page at `/admin`, gated by `is_admin` flag in JWT.
+
+**Features:**
+- Manage tips (Dagens tanke): add, list, delete
+- Manage content items: add, edit, delete
+- User list: view users, toggle `is_admin`, activate/revoke membership
+- Membership controls: "Activate 7-day trial", "Activate 1-month membership" (see membership section)
+
+**Implement together with:** Dagens tanke rotation and membership system.
+
+---
+
+### Dagens tanke — rotating tips
+
+Replace hardcoded `TIPS` array in `DashboardPage.jsx` with a DB-backed rotation.
+
+**Schema addition:**
 ```sql
 CREATE TABLE tips (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,12 +121,91 @@ CREATE TABLE tips (
 ```
 
 **API:**
-- `GET /api/tip` — picks random unused tip, marks it used, returns `{ id, body }`. If all used, resets all (set used_at = NULL) then picks one.
-- Admin endpoints (add, list, delete) — served under `/admin*`, requires `is_admin`.
+- `GET /api/tip` — picks random unused tip, marks it used. Resets all when exhausted.
+- Admin CRUD under `/api/admin/tips` — gated by `is_admin`.
 
-**Frontend:**
-- On load, check localStorage: `{ tipId, body, date }`.
-- If `date === today` → show cached tip.
-- Else → fetch `/api/tip`, cache result with today's date.
+**Frontend:** cache today's tip in localStorage `{ tipId, body, date }`. Fetch new if date ≠ today.
 
-**Benched until:** auth + admin page are implemented.
+**Benched until:** admin dashboard is built.
+
+---
+
+### Membership & access control
+
+Simulate membership tiers with admin-controlled flags. No payment integration yet.
+
+**Schema addition:**
+```sql
+ALTER TABLE users ADD COLUMN membership TEXT DEFAULT 'none';
+-- values: 'none' | 'trial' | 'member'
+ALTER TABLE users ADD COLUMN membership_expires_at INTEGER;
+```
+
+**Admin controls (in dashboard):**
+- "Activate 7-day trial" → sets `membership = 'trial'`, `expires_at = now + 7 days`
+- "Activate 1-month membership" → sets `membership = 'member'`, `expires_at = now + 30 days`
+- Revoke: sets `membership = 'none'`
+
+**Access rules (to define):**
+- Which weeks/content are free vs. member-only?
+- What does a non-member see — locked cards, a paywall prompt?
+
+**Dev unlock button:** hide for non-admin users. Bundle this change with the admin dashboard work.
+
+---
+
+### User account — display name
+
+Allow users to set a custom display name (separate from their Google name).
+
+- Add `display_name TEXT` column to `users`
+- Profile settings page or inline edit in the avatar dropdown
+- TopNav and other components prefer `display_name` over `name` when set
+
+---
+
+### Avatar dropdown — full menu
+
+Currently: Profil, Innstillinger, Personvern, Hjelp og støtte are disabled placeholders.
+
+Each needs a destination:
+- **Profil** → display name edit, account info
+- **Innstillinger** → theme (already in TopNav), notification preferences (future)
+- **Personvern** → link to privacy policy page
+- **Hjelp og støtte** → link to help page
+
+---
+
+### Legal & compliance (GDPR / Norwegian law)
+
+Norway follows GDPR via the Personal Data Act (*Personopplysningsloven*). The app stores name, email, Google ID, progress, and reflection text — all personal data under GDPR.
+
+**Account deletion (Article 17 — right to erasure)**
+Users must be able to delete their account and all associated data. This means hard-deleting rows across `users`, `user_progress`, `user_reflections`, and `sessions`. Add a delete account flow in the profile/settings page with a confirmation step.
+
+**Data export (Article 20 — right to portability)**
+Users can request a copy of their stored data in a machine-readable format. Implement a `GET /api/account/export` endpoint that returns a JSON file of all data tied to the user.
+
+**Consent**
+- Cookie consent: the session cookie is strictly necessary (no banner required), but document this in the privacy policy.
+- Reflection text is sensitive (anxiety-related) and likely qualifies as **special category data under GDPR Article 9** (data concerning health/mental health). This carries stricter requirements than ordinary personal data — explicit consent, a documented legal basis, and stronger security measures. Flag this to whoever drafts the privacy policy before launch.
+
+**Privacy policy page**
+Must cover: what data is collected, why, how long it is kept, third parties (Google OAuth, Cloudflare), and user rights (access, correction, deletion, portability). Should be written in Norwegian.
+
+**Terms of service page**
+Standard ToS covering acceptable use, service availability, and subscription terms.
+
+**Data processor agreement**
+Cloudflare and Google act as data processors. Cloudflare's DPA is available in their dashboard. Google's is covered under their OAuth terms. Document these in the privacy policy.
+
+**Data residency**
+D1 data may be stored outside the EEA by default. Check Cloudflare's current D1 data location options — if EEA-only storage becomes available, prefer it.
+
+Linked from onboarding page footer and avatar dropdown.
+
+---
+
+### Help page
+
+Static or lightly dynamic. Content TBD.
