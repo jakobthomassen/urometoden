@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
+import { marked } from 'marked'
 import styles from './AdminPage.module.css'
+// DEV ONLY — remove before prod: bundles markdown files into the client build
+import changelogRaw from '../../../CHANGELOG.md?raw'
+import todoRaw      from '../../../TODO.md?raw'
 
-const TABS = ['Brukere', 'Daglige tips', 'Innhold']
+// DEV ONLY — remove 'Prosjekt' tab before prod
+const TABS = ['Brukere', 'Daglige tips', 'Innhold', 'Prosjekt']
 const DAY  = 24 * 60 * 60 * 1000
 
 function getInitials(name) {
@@ -92,11 +97,35 @@ function UserRow({ user, currentUserId, onUpdate }) {
   )
 }
 
+// DEV ONLY — entire ProsjektDoc component and 'Prosjekt' tab to be removed before prod
+function ProsjektDoc({ label, raw }) {
+  const [open, setOpen] = useState(true)
+  const html = marked.parse(raw)
+  return (
+    <div className={styles.prosjektDoc}>
+      <button className={styles.prosjektDocHeader} onClick={() => setOpen(o => !o)}>
+        <span>{open ? '▾' : '▸'}</span>
+        <span>{label}</span>
+      </button>
+      {open && (
+        <div
+          className={styles.prosjektDocBody}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      )}
+    </div>
+  )
+}
+
+const PER_PAGE_OPTIONS = [10, 25, 50]
+
 export default function AdminPage({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('Brukere')
   const [users, setUsers]         = useState([])
   const [search, setSearch]       = useState('')
   const [loading, setLoading]     = useState(true)
+  const [page, setPage]           = useState(1)
+  const [perPage, setPerPage]     = useState(10)
 
   const fetchUsers = useCallback(async (q = '') => {
     setLoading(true)
@@ -109,13 +138,20 @@ export default function AdminPage({ user, onLogout }) {
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
   useEffect(() => {
-    const timer = setTimeout(() => fetchUsers(search), 300)
+    const timer = setTimeout(() => { setPage(1); fetchUsers(search) }, 300)
     return () => clearTimeout(timer)
   }, [search, fetchUsers])
+
+  useEffect(() => { setPage(1) }, [perPage])
 
   function handleUpdate(updated) {
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))
   }
+
+  const totalPages  = Math.max(1, Math.ceil(users.length / perPage))
+  const pagedUsers  = users.slice((page - 1) * perPage, page * perPage)
+  const countFrom   = users.length === 0 ? 0 : (page - 1) * perPage + 1
+  const countTo     = Math.min(page * perPage, users.length)
 
   return (
     <div className={styles.page}>
@@ -145,28 +181,76 @@ export default function AdminPage({ user, onLogout }) {
       <main className={styles.main}>
         {activeTab === 'Brukere' && (
           <>
-            <input
-              className={styles.search}
-              type="text"
-              placeholder="Søk etter navn eller e-post…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <div className={styles.toolbar}>
+              <input
+                className={styles.search}
+                type="text"
+                placeholder="Søk etter navn eller e-post…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <div className={styles.perPageWrapper}>
+                <label className={styles.perPageLabel}>Vis</label>
+                <select
+                  className={styles.perPageSelect}
+                  value={perPage}
+                  onChange={e => setPerPage(Number(e.target.value))}
+                >
+                  {PER_PAGE_OPTIONS.map(n => (
+                    <option key={n} value={n}>{n} per side</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {loading ? (
               <div className={styles.empty}>Laster…</div>
             ) : users.length === 0 ? (
               <div className={styles.empty}>Ingen brukere funnet.</div>
             ) : (
-              <div className={styles.userList}>
-                {users.map(u => (
-                  <UserRow
-                    key={u.id}
-                    user={u}
-                    currentUserId={user.id}
-                    onUpdate={handleUpdate}
-                  />
-                ))}
-              </div>
+              <>
+                <div className={styles.userList}>
+                  {pagedUsers.map(u => (
+                    <UserRow
+                      key={u.id}
+                      user={u}
+                      currentUserId={user.id}
+                      onUpdate={handleUpdate}
+                    />
+                  ))}
+                </div>
+
+                <div className={styles.pagination}>
+                  <span className={styles.pageInfo}>
+                    {countFrom}–{countTo} av {users.length}
+                  </span>
+                  <div className={styles.pageControls}>
+                    <button
+                      className={styles.pageBtn}
+                      onClick={() => setPage(p => p - 1)}
+                      disabled={page === 1}
+                    >
+                      ←
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                      <button
+                        key={p}
+                        className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      className={styles.pageBtn}
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={page === totalPages}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}
@@ -182,6 +266,15 @@ export default function AdminPage({ user, onLogout }) {
           <div className={styles.placeholder}>
             <p className={styles.placeholderTitle}>Innholdsadministrasjon</p>
             <p className={styles.placeholderSub}>Ikke implementert ennå.</p>
+          </div>
+        )}
+
+        {activeTab === 'Prosjekt' && (
+          <div className={styles.prosjekt}>
+            <div className={styles.prosjektTabs}>
+              <ProsjektDoc label="Endringslogg" raw={changelogRaw} />
+              <ProsjektDoc label="TODO" raw={todoRaw} />
+            </div>
           </div>
         )}
       </main>

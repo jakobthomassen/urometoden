@@ -6,7 +6,6 @@ const NAV_TABS = [
   { label: 'Reisen',    active: true  },
   { label: 'Bibliotek', active: true  },
   { label: 'Kurs',      active: false },
-  { label: 'Uroskolen', active: false },
 ]
 
 function SunIcon() {
@@ -34,7 +33,14 @@ function MoonIcon() {
 }
 
 const DISABLED_ITEMS = ['Profil', 'Innstillinger', 'Personvern', 'Hjelp og støtte']
-const POPUP_KEYS = ['uro_visited']
+
+function resetLocalStorage() {
+  localStorage.removeItem('uro_visited')
+  localStorage.removeItem('week_progress')
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('reflection_'))
+    .forEach(k => localStorage.removeItem(k))
+}
 
 function getInitials(name) {
   if (!name) return '?'
@@ -45,7 +51,7 @@ function ProfileMenu({ user, onClose, onLogout }) {
   const [resetDone, setResetDone] = useState(false)
 
   function handleReset() {
-    POPUP_KEYS.forEach(k => localStorage.removeItem(k))
+    resetLocalStorage()
     setResetDone(true)
     setTimeout(() => setResetDone(false), 2000)
   }
@@ -67,14 +73,14 @@ function ProfileMenu({ user, onClose, onLogout }) {
           {label}
         </button>
       ))}
-      <button className={styles.menuItem} onClick={() => { onClose(); onLogout() }}>
-        Logg ut
-      </button>
 
       <div className={styles.menuDivider} />
 
       <button className={styles.menuItemReset} onClick={handleReset}>
-        {resetDone ? 'Tilbakestilt ✓' : 'Tilbakestill pop-ups'}
+        {resetDone ? 'Tilbakestilt ✓' : 'Nullstill kursdata'}
+      </button>
+      <button className={styles.menuItemLogout} onClick={() => { onClose(); onLogout() }}>
+        Logg ut
       </button>
     </div>
   )
