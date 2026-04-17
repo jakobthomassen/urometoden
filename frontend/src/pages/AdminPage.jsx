@@ -181,6 +181,19 @@ export default function AdminPage({ user, onLogout }) {
       <main className={styles.main}>
         {activeTab === 'Brukere' && (
           <>
+            <div className={styles.statsRow}>
+              {[
+                { label: 'Brukere',       value: users.length },
+                { label: 'Medlemmer',     value: users.filter(u => u.membership === 'member' && u.membership_expires_at > Date.now()).length },
+                { label: 'Aktive prøver', value: users.filter(u => u.membership === 'trial'  && u.membership_expires_at > Date.now()).length },
+              ].map(({ label, value }) => (
+                <div key={label} className={styles.statCard}>
+                  <div className={styles.statValue}>{value}</div>
+                  <div className={styles.statLabel}>{label}</div>
+                </div>
+              ))}
+            </div>
+
             <div className={styles.toolbar}>
               <input
                 className={styles.search}
