@@ -95,3 +95,31 @@
   color: var(--text-2);
   margin: 0;
 }
+
+.footer {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.markBtn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  border: 0.5px solid var(--border-md);
+  background: var(--surface2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s, color 0.14s;
+}
+.markBtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.markBtnDone {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}

@@ -56,6 +56,8 @@ export default function HomePage({ weekId = 1, onProgressChange }) {
       <CaseModal
         item={activeCase}
         onClose={() => setActiveCase(null)}
+        onComplete={() => markComplete(activeCase.id)}
+        completed={activeCase ? completedItems.includes(activeCase.id) : false}
       />
 
       <div className={styles.header}>
@@ -88,9 +90,9 @@ export default function HomePage({ weekId = 1, onProgressChange }) {
                 meta={item.meta}
                 completed={completedItems.includes(item.id)}
                 onClick={() => {
-                  markComplete(item.id)
-                  if (item.type === 'reflect') setActiveReflection(item)
+                  if (item.type === 'reflect') { markComplete(item.id); setActiveReflection(item) }
                   else if (item.type === 'case') setActiveCase(item)
+                  else markComplete(item.id)
                 }}
               />
             ))}

@@ -1,7 +1,11 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import styles from './CaseModal.module.css'
 
-export default function CaseModal({ item, onClose }) {
+export default function CaseModal({ item, onClose, onComplete, completed = false }) {
+  const [marked, setMarked] = useState(false)
+
+  useEffect(() => { setMarked(completed) }, [item, completed])
+
   useEffect(() => {
     if (!item) return
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -12,6 +16,12 @@ export default function CaseModal({ item, onClose }) {
   if (!item) return null
 
   const paragraphs = item.body.split('\n\n')
+
+  function handleMark() {
+    if (marked) return
+    setMarked(true)
+    onComplete?.()
+  }
 
   return (
     <div className={styles.backdrop} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -34,6 +44,16 @@ export default function CaseModal({ item, onClose }) {
 
         <div className={styles.body}>
           {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
+        </div>
+
+        <div className={styles.footer}>
+          <button
+            className={`${styles.markBtn} ${marked ? styles.markBtnDone : ''}`}
+            onClick={handleMark}
+            disabled={marked}
+          >
+            {marked ? '✓ Lest' : 'Lest'}
+          </button>
         </div>
 
       </div>

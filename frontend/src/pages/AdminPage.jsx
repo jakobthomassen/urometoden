@@ -97,6 +97,111 @@ function UserRow({ user, currentUserId, onUpdate }) {
   )
 }
 
+function timeSinceUsed(usedAt) {
+  if (!usedAt) return null
+  const ms      = Date.now() - usedAt
+  const minutes = Math.floor(ms / 60000)
+  const hours   = Math.floor(ms / 3600000)
+  const days    = Math.floor(ms / 86400000)
+  if (minutes < 60)  return `${minutes}m siden`
+  if (hours   < 24)  return `${hours}t siden`
+  return `${days}d siden`
+}
+
+function TipsTab() {
+  const [tips, setTips]       = useState([])
+  const [loading, setLoading] = useState(true)
+  const [newBody, setNewBody] = useState('')
+  const [saving, setSaving]   = useState(false)
+
+  async function fetchTips() {
+    setLoading(true)
+    const res  = await fetch('/api/admin/tips')
+    const data = await res.json()
+    setTips(data)
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchTips() }, [])
+
+  async function handleAdd() {
+    if (!newBody.trim()) return
+    setSaving(true)
+    await fetch('/api/admin/tips', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ body: newBody }),
+    })
+    setNewBody('')
+    setSaving(false)
+    fetchTips()
+  }
+
+  async function handleDelete(id) {
+    await fetch(`/api/admin/tips/${id}`, { method: 'DELETE' })
+    setTips(prev => prev.filter(t => t.id !== id))
+  }
+
+  const unused = tips.filter(t => !t.used_at)
+  const used   = tips.filter(t =>  t.used_at)
+
+  return (
+    <div className={styles.tipsTab}>
+      <div className={styles.tipsAdd}>
+        <textarea
+          className={styles.tipsTextarea}
+          placeholder="Skriv inn en ny tanke…"
+          value={newBody}
+          onChange={e => setNewBody(e.target.value)}
+          rows={3}
+        />
+        <button className={styles.tipsAddBtn} onClick={handleAdd} disabled={saving || !newBody.trim()}>
+          {saving ? 'Lagrer…' : 'Legg til'}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className={styles.empty}>Laster…</div>
+      ) : (
+        <>
+          <div className={styles.tipsSection}>
+            <div className={styles.tipsSectionLabel}>Ubrukt ({unused.length})</div>
+            {unused.length === 0
+              ? <div className={styles.empty}>Ingen ubrukte tips.</div>
+              : unused.map(t => <TipRow key={t.id} tip={t} onDelete={handleDelete} />)
+            }
+          </div>
+          <div className={styles.tipsSection}>
+            <div className={styles.tipsSectionLabel}>Brukt ({used.length})</div>
+            {used.length === 0
+              ? <div className={styles.empty}>Ingen brukte tips.</div>
+              : used.map(t => <TipRow key={t.id} tip={t} onDelete={handleDelete} />)
+            }
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function TipRow({ tip, onDelete }) {
+  const since = timeSinceUsed(tip.used_at)
+  return (
+    <div className={styles.tipRow}>
+      <div className={styles.tipBody}>{tip.body}</div>
+      <div className={styles.tipMeta}>
+        {since
+          ? <span className={styles.tipUsed}>{since}</span>
+          : <span className={styles.tipUnused}>Ikke brukt</span>
+        }
+        <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => onDelete(tip.id)}>
+          Slett
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // DEV ONLY — entire ProsjektDoc component and 'Prosjekt' tab to be removed before prod
 function ProsjektDoc({ label, raw }) {
   const [open, setOpen] = useState(true)
@@ -268,12 +373,7 @@ export default function AdminPage({ user, onLogout }) {
           </>
         )}
 
-        {activeTab === 'Daglige tips' && (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholderTitle}>Daglige tips</p>
-            <p className={styles.placeholderSub}>Ikke implementert ennå.</p>
-          </div>
-        )}
+        {activeTab === 'Daglige tips' && <TipsTab />}
 
         {activeTab === 'Innhold' && (
           <div className={styles.placeholder}>

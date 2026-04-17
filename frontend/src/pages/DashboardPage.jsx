@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import styles from './DashboardPage.module.css'
 
 function getGreeting() {
@@ -7,23 +8,39 @@ function getGreeting() {
   return 'God kveld'
 }
 
-const TIPS = [
-  'Uro er ikke farlig – det er et signal. Du trenger ikke bekjempe det.',
-  'Tre dype pust kan skifte nervesystemet fra beredskap til ro.',
-  'Legg merke til uroen uten å handle på den. Det er en ferdighet som trenes.',
-  'Kroppen vet ofte hva sinnet ikke har ord for ennå.',
-  'Fremgang i Urometoden handler ikke om å bli kvitt uro, men om å endre forholdet til den.',
-]
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
 
-function getDailyTip() {
-  const day = new Date().getDate()
-  return TIPS[day % TIPS.length]
+function useDailyTip() {
+  const [tip, setTip] = useState(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('daily_tip') || 'null')
+      if (cached?.date === todayStr()) return cached.body
+    } catch {}
+    return null
+  })
+
+  useEffect(() => {
+    if (tip) return
+    fetch('/api/tip')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        localStorage.setItem('daily_tip', JSON.stringify({ date: todayStr(), body: data.body }))
+        setTip(data.body)
+      })
+      .catch(() => {})
+  }, [tip])
+
+  return tip
 }
 
 export default function DashboardPage({ weeks = [], onNavigateToWeek }) {
   const activeWeek = weeks.find(w => w.status === 'active') ?? weeks[0] ?? { id: 1, title: '…' }
   const doneCount  = weeks.filter(w => w.status === 'done').length
   const progress   = (doneCount / 8) * 100
+  const tip        = useDailyTip()
 
   return (
     <main className={styles.main}>
@@ -60,7 +77,7 @@ export default function DashboardPage({ weeks = [], onNavigateToWeek }) {
 
       <div className={styles.tipCard}>
         <div className={styles.tipLabel}>Dagens tanke</div>
-        <p className={styles.tipText}>{getDailyTip()}</p>
+        <p className={styles.tipText}>{tip ?? '…'}</p>
       </div>
 
     </main>

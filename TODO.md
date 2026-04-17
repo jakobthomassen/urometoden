@@ -40,6 +40,7 @@ Week content and library items are static. Add `Cache-Control: public, max-age=3
 Schema is ready (`identities` table). Coordinate with the app team before they implement Apple Sign-In.
 
 **Apple-specific notes:**
+
 - Apple only provides name and email on the first sign-in — must persist on first auth.
 - Apple relay emails (`privaterelay.appleid.com`) cannot be matched to a Google account automatically — auto-linking is unreliable. Use manual linking from account settings.
 
@@ -61,16 +62,19 @@ Merge conflicts need a defined strategy — e.g. if both accounts have progress 
 Move all progress tracking from localStorage to D1. localStorage is per-device and lost on clear; DB-backed progress follows the user across devices.
 
 **What needs migrating:**
+
 - Week start timestamps (currently `week_progress` in localStorage)
 - Completed item IDs per week
 - Reflection text per item
 
 **Revise the definition of "completed":**
+
 - Currently: any click on a card marks it complete.
 - Consider: explicit "Merk som fullført" button, minimum listening time for audio, or a combination.
 - Decision needed before migration — the schema should reflect the final completion model.
 
 **Schema additions (draft):**
+
 ```sql
 CREATE TABLE user_progress (
   user_id        INTEGER NOT NULL REFERENCES users(id),
@@ -97,6 +101,7 @@ CREATE TABLE user_reflections (
 ### Admin dashboard — remaining
 
 First draft is live. Remaining:
+
 - **Dagens tanke** tab: add, list, delete tips (see below)
 - **Innhold** tab: add, edit, delete content items and week assignments
 - **Access rules enforcement**: which weeks/content are free vs. member-only? What does a non-member see — locked cards, a paywall prompt?
@@ -108,7 +113,8 @@ First draft is live. Remaining:
 
 Replace hardcoded `TIPS` array in `DashboardPage.jsx` with a DB-backed rotation.
 
-**Schema addition:**
+**Schema addition (draft):**
+
 ```sql
 CREATE TABLE tips (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,6 +124,7 @@ CREATE TABLE tips (
 ```
 
 **API:**
+
 - `GET /api/tip` — picks random unused tip, marks it used. Resets all when exhausted.
 - Admin CRUD under `/api/admin/tips` — gated by `is_admin`.
 
@@ -128,6 +135,7 @@ CREATE TABLE tips (
 ### Membership & access control — access rules
 
 Schema and admin controls are implemented. Still to define and enforce:
+
 - Which weeks/content are free vs. member-only?
 - What does a non-member or expired trial see — locked cards, a paywall prompt?
 - Membership expiry enforcement on the frontend and API.
@@ -149,6 +157,7 @@ Allow users to set a custom display name (separate from their Google name).
 Currently: Profil, Innstillinger, Personvern, Hjelp og støtte are disabled placeholders.
 
 Each needs a destination:
+
 - **Profil** → display name edit, account info
 - **Innstillinger** → theme (already in TopNav), notification preferences (future)
 - **Personvern** → link to privacy policy page
@@ -158,7 +167,7 @@ Each needs a destination:
 
 ### Legal & compliance (GDPR / Norwegian law)
 
-Norway follows GDPR via the Personal Data Act (*Personopplysningsloven*). The app stores name, email, Google ID, progress, and reflection text — all personal data under GDPR.
+Norway follows GDPR via the Personal Data Act (_Personopplysningsloven_). The app stores name, email, Google ID, progress, and reflection text — all personal data under GDPR.
 
 **Account deletion (Article 17 — right to erasure)**
 Users must be able to delete their account and all associated data. Hard-delete rows across `users`, `identities`, `user_progress`, `user_reflections`, and `sessions`. Add a delete account flow in the profile/settings page with a confirmation step.
@@ -167,6 +176,7 @@ Users must be able to delete their account and all associated data. Hard-delete 
 Implement `GET /api/account/export` — returns a JSON file of all data tied to the user.
 
 **Consent**
+
 - Cookie consent: the session cookie is strictly necessary (no banner required), but document this in the privacy policy.
 - Reflection text likely qualifies as **special category data under GDPR Article 9** (health/mental health). Requires explicit consent, a documented legal basis, and stronger security measures. Flag to whoever drafts the privacy policy before launch.
 

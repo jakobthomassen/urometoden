@@ -9,6 +9,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at            INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS tips (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  body      TEXT    NOT NULL,
+  used_at   INTEGER,
+  used_date TEXT
+);
+
 CREATE TABLE IF NOT EXISTS identities (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

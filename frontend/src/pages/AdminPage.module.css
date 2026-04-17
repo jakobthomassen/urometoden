@@ -362,6 +362,103 @@
   padding: 24px 0;
 }
 
+/* Tips tab */
+.tipsTab {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 680px;
+}
+
+.tipsAdd {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.tipsTextarea {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.14s;
+  line-height: 1.55;
+}
+.tipsTextarea::placeholder { color: var(--text-3); }
+.tipsTextarea:focus { border-color: var(--accent); }
+
+.tipsAddBtn {
+  padding: 9px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.tipsAddBtn:disabled { opacity: 0.45; cursor: default; }
+
+.tipsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tipsSectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+
+.tipRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tipBody {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.tipMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.tipUsed {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.tipUnused {
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 /* Prosjekt tab */
 .prosjekt {
   display: grid;
