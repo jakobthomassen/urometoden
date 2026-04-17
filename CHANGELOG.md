@@ -6,6 +6,8 @@ Improved admin dashboard layout — content now centered with max-width on large
 
 Added pagination to user list with configurable per-page (10/25/50), page controls, and count display. Resets to page 1 on search or per-page change.
 
+Prosjekt tab displays CHANGELOG and TODO side-by-side as independently scrollable panels — headers pinned, bodies scroll.
+
 Added "Prosjekt" tab to admin dashboard serving CHANGELOG.md and TODO.md as collapsible rendered markdown — dev only, to be removed before prod.
 
 Fixed membership badge in TopNav — shows live trial countdown (days/hours), green "Medlem" for members, grey "Ikke medlem" otherwise. Clicking prompts billing page notice.

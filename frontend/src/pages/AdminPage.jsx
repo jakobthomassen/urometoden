@@ -271,10 +271,8 @@ export default function AdminPage({ user, onLogout }) {
 
         {activeTab === 'Prosjekt' && (
           <div className={styles.prosjekt}>
-            <div className={styles.prosjektTabs}>
-              <ProsjektDoc label="Endringslogg" raw={changelogRaw} />
-              <ProsjektDoc label="TODO" raw={todoRaw} />
-            </div>
+            <ProsjektDoc label="Endringslogg" raw={changelogRaw} />
+            <ProsjektDoc label="TODO" raw={todoRaw} />
           </div>
         )}
       </main>
