@@ -25,16 +25,22 @@ export async function onRequestGet({ env, request }) {
     }),
   })
 
+  if (!tokenRes.ok) return new Response('Token exchange failed', { status: 502 })
+
   const tokens = await tokenRes.json()
   if (!tokens.access_token) {
     return new Response('Token exchange failed', { status: 502 })
   }
 
   // Fetch Google user info
-  const userRes    = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+  const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
+
+  if (!userRes.ok) return new Response('Failed to fetch user info', { status: 502 })
+
   const googleUser = await userRes.json()
+  if (!googleUser.email) return new Response('Invalid user info', { status: 502 })
 
   const now = Date.now()
 

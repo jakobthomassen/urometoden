@@ -225,38 +225,48 @@ function ProsjektDoc({ label, raw }) {
 const PER_PAGE_OPTIONS = [10, 25, 50]
 
 export default function AdminPage({ user, onLogout }) {
-  const [activeTab, setActiveTab] = useState('Brukere')
-  const [users, setUsers]         = useState([])
-  const [search, setSearch]       = useState('')
-  const [loading, setLoading]     = useState(true)
-  const [page, setPage]           = useState(1)
-  const [perPage, setPerPage]     = useState(10)
+  const [activeTab, setActiveTab]   = useState('Brukere')
+  const [users, setUsers]           = useState([])
+  const [total, setTotal]           = useState(0)
+  const [memberCount, setMemberCount] = useState(0)
+  const [trialCount, setTrialCount]   = useState(0)
+  const [search, setSearch]         = useState('')
+  const [loading, setLoading]       = useState(true)
+  const [page, setPage]             = useState(1)
+  const [perPage, setPerPage]       = useState(10)
 
-  const fetchUsers = useCallback(async (q = '') => {
+  const fetchUsers = useCallback(async (p = 1, pp = 10, q = '') => {
     setLoading(true)
-    const res  = await fetch(`/api/admin/users${q ? `?search=${encodeURIComponent(q)}` : ''}`)
+    const params = new URLSearchParams({ page: p, per_page: pp })
+    if (q) params.set('search', q)
+    const res  = await fetch(`/api/admin/users?${params}`)
     const data = await res.json()
-    setUsers(data)
+    setUsers(data.results)
+    setTotal(data.total)
+    setMemberCount(data.memberCount)
+    setTrialCount(data.trialCount)
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => { fetchUsers(1, perPage) }, [fetchUsers, perPage])
 
   useEffect(() => {
-    const timer = setTimeout(() => { setPage(1); fetchUsers(search) }, 300)
+    const timer = setTimeout(() => { setPage(1); fetchUsers(1, perPage, search) }, 300)
     return () => clearTimeout(timer)
-  }, [search, fetchUsers])
-
-  useEffect(() => { setPage(1) }, [perPage])
+  }, [search, perPage, fetchUsers])
 
   function handleUpdate(updated) {
     setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))
   }
 
-  const totalPages  = Math.max(1, Math.ceil(users.length / perPage))
-  const pagedUsers  = users.slice((page - 1) * perPage, page * perPage)
-  const countFrom   = users.length === 0 ? 0 : (page - 1) * perPage + 1
-  const countTo     = Math.min(page * perPage, users.length)
+  const totalPages = Math.max(1, Math.ceil(total / perPage))
+  const countFrom  = total === 0 ? 0 : (page - 1) * perPage + 1
+  const countTo    = Math.min(page * perPage, total)
+
+  function goToPage(p) {
+    setPage(p)
+    fetchUsers(p, perPage, search)
+  }
 
   return (
     <div className={styles.page}>
@@ -288,9 +298,9 @@ export default function AdminPage({ user, onLogout }) {
           <>
             <div className={styles.statsRow}>
               {[
-                { label: 'Brukere',       value: users.length },
-                { label: 'Medlemmer',     value: users.filter(u => u.membership === 'member' && u.membership_expires_at > Date.now()).length },
-                { label: 'Aktive prøver', value: users.filter(u => u.membership === 'trial'  && u.membership_expires_at > Date.now()).length },
+                { label: 'Brukere',       value: total },
+                { label: 'Medlemmer',     value: memberCount },
+                { label: 'Aktive prøver', value: trialCount },
               ].map(({ label, value }) => (
                 <div key={label} className={styles.statCard}>
                   <div className={styles.statValue}>{value}</div>
@@ -312,7 +322,7 @@ export default function AdminPage({ user, onLogout }) {
                 <select
                   className={styles.perPageSelect}
                   value={perPage}
-                  onChange={e => setPerPage(Number(e.target.value))}
+                  onChange={e => { setPage(1); setPerPage(Number(e.target.value)) }}
                 >
                   {PER_PAGE_OPTIONS.map(n => (
                     <option key={n} value={n}>{n} per side</option>
@@ -323,12 +333,12 @@ export default function AdminPage({ user, onLogout }) {
 
             {loading ? (
               <div className={styles.empty}>Laster…</div>
-            ) : users.length === 0 ? (
+            ) : total === 0 ? (
               <div className={styles.empty}>Ingen brukere funnet.</div>
             ) : (
               <>
                 <div className={styles.userList}>
-                  {pagedUsers.map(u => (
+                  {users.map(u => (
                     <UserRow
                       key={u.id}
                       user={u}
@@ -345,7 +355,7 @@ export default function AdminPage({ user, onLogout }) {
                   <div className={styles.pageControls}>
                     <button
                       className={styles.pageBtn}
-                      onClick={() => setPage(p => p - 1)}
+                      onClick={() => goToPage(page - 1)}
                       disabled={page === 1}
                     >
                       ←
@@ -354,14 +364,14 @@ export default function AdminPage({ user, onLogout }) {
                       <button
                         key={p}
                         className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
-                        onClick={() => setPage(p)}
+                        onClick={() => goToPage(p)}
                       >
                         {p}
                       </button>
                     ))}
                     <button
                       className={styles.pageBtn}
-                      onClick={() => setPage(p => p + 1)}
+                      onClick={() => goToPage(page + 1)}
                       disabled={page === totalPages}
                     >
                       →
