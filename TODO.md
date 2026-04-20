@@ -2,13 +2,13 @@
 
 ### Security hardening
 
-**Unprotected API endpoints**
+**Unprotected API endpoints** *(high)*
 `/api/content` and `/api/weeks/[weekId]/content` have no auth check — content is publicly readable via direct API call even though the UI is gated. Add JWT verification to all API functions using the shared `functions/lib/auth.js` helper.
 
-**Rate limiting on auth endpoints**
+**Rate limiting on auth endpoints** *(medium)*
 `/api/auth/google` and `/api/auth/callback` are open to abuse. No code change needed — configure via Cloudflare dashboard → Security → Rate Limiting.
 
-**Session revocation**
+**Session revocation** *(medium)*
 No way to invalidate a specific session (compromised account, logout-all-devices). Requires a `sessions` table in D1 checked on each `/api/auth/me` request.
 
 ```sql
@@ -23,15 +23,49 @@ CREATE TABLE sessions (
 
 Store session ID in the JWT, check it against the table on each request. Revoke by setting `revoked = 1`.
 
+**Admin PATCH body not validated** *(medium)*
+`/api/admin/users/[id].js` accepts `membership_expires_at` and `is_admin` from the request body without type or range checks. `parseInt(params.id)` returns `NaN` on bad input. Add explicit validation before the DB write.
+
+**Path traversal in audio endpoint** *(medium)*
+`/api/audio/[filename].js` passes `params.filename` directly to the R2 `get()` call. A crafted URL with `../` segments could access files outside the intended directory. Validate that `filename` matches an allowlist or sanitize before the bucket call.
+
+**OAuth callback error handling missing** *(medium)*
+`/api/auth/callback.js` calls `userRes.json()` without checking `userRes.ok`. A failed Google userinfo response throws an unhandled exception and leaks a stack trace. Wrap in error handling and return a clean 500.
+
+**XSS via unsanitized markdown** *(low — dev only)*
+`AdminPage.jsx` uses `dangerouslySetInnerHTML` with raw `marked.parse()` output on CHANGELOG/TODO. The Prosjekt tab is dev-only but the pattern should not migrate to any production content rendering without passing output through a sanitizer (e.g. DOMPurify).
+
+**GDPR Article 9 — reflection text** *(compliance)*
+Reflection text (personal emotional/mental-health data) likely qualifies as special-category data. Requires explicit consent and a documented legal basis before launch. Flag to whoever drafts the privacy policy.
+
 ---
 
 ### Performance
 
-**`/api/auth/me` blocks first render**
+**`/api/auth/me` blocks first render** *(medium)*
 Every page load waits for a round trip before anything renders. Store a non-authoritative user hint in localStorage on sign-in. On load, render immediately from the hint while the `/api/auth/me` call confirms. If the call returns 401, clear the hint and show `OnboardingPage`.
 
-**No cache headers on content API**
+**No cache headers on content API** *(medium)*
 Week content and library items are static. Add `Cache-Control: public, max-age=3600` to `/api/content` and `/api/weeks/[weekId]/content` responses so Cloudflare caches them at the edge. Invalidate on content changes.
+
+**Missing DB indexes** *(high — scales poorly)*
+No indexes on columns used in search or ordering. Add at minimum:
+
+```sql
+CREATE INDEX idx_users_email      ON users(email);
+CREATE INDEX idx_users_name       ON users(name);
+CREATE INDEX idx_week_content_wid ON week_content(week_id);
+CREATE INDEX idx_tips_used_at     ON tips(used_at);
+CREATE INDEX idx_identities_uid   ON identities(user_id);
+```
+
+Without these, admin user search and week content queries do full table scans.
+
+**Admin users query is unbounded** *(medium)*
+`/api/admin/users/index.js` returns the entire users table in one query. The admin page paginates client-side, so every keystroke in the search box fetches all rows. Implement server-side `LIMIT`/`OFFSET` with a `?page=&per_page=&search=` interface.
+
+**`SELECT *` on content endpoints** *(low)*
+`/api/content` and `/api/weeks/[weekId]/content` use `SELECT *`. Select only the columns the frontend actually consumes to reduce serialization size.
 
 ---
 
