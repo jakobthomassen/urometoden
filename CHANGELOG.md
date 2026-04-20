@@ -1,5 +1,13 @@
 # Changelog
 
+## 20.04.2026
+
+Changed "Under utvikling" banner on login page from green to amber to match the daily hint style.
+
+Updated TODO security and performance sections — added findings from full codebase sweep: missing DB indexes, unbounded admin query, admin PATCH validation gap, audio path traversal, OAuth callback error handling, markdown XSS note, GDPR Article 9 flag.
+
+---
+
 ## 17.04.2026
 
 Improved admin dashboard layout — content now centered with max-width on large displays.
