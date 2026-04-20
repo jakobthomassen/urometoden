@@ -177,10 +177,12 @@
   text-align: left;
   transition: background 0.12s, color 0.12s;
 }
-.libItem:hover {
+.libItem:hover:not(:disabled) {
   background: var(--surface2);
   color: var(--text);
 }
+.libItem:disabled { cursor: default; }
+.libItemLocked { opacity: 0.45; }
 .libIcon {
   width: 22px;
   height: 22px;

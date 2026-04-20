@@ -11,6 +11,7 @@ import WelcomeModal from './components/WelcomeModal'
 import OnboardingPage from './pages/OnboardingPage'
 import AdminPage from './pages/AdminPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
+import { isMember } from './utils/membership'
 
 function getInitialDark() {
   const stored = localStorage.getItem('theme')
@@ -26,6 +27,7 @@ export default function App() {
   const [activeWeek, setActiveWeek]             = useState(1)
   const [bibliotekFilter, setBibliotekFilter]   = useState('all')
   const { weeks, refresh: refreshProgress }     = useWeekProgress()
+  const memberAccess = isMember(user)
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -40,6 +42,10 @@ export default function App() {
   }
 
   function navigate(page, data) {
+    if (!memberAccess && (page === 'Reisen' || page === 'Bibliotek' || page === 'Uke')) {
+      alert('Reisen og biblioteket er tilgjengelig for medlemmer og brukere i prøveperiode.')
+      return
+    }
     setActivePage(page)
     if (page === 'Bibliotek' && data) setBibliotekFilter(data)
     if (page === 'Uke' && data)       setActiveWeek(data)
@@ -80,6 +86,7 @@ export default function App() {
         onNavigate={navigate}
         user={user}
         onLogout={handleLogout}
+        memberAccess={memberAccess}
       />
       <Sidebar
         weeks={weeks}
@@ -87,8 +94,9 @@ export default function App() {
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         onNavigate={navigate}
+        memberAccess={memberAccess}
       />
-      {activePage === 'Hjem'      && <DashboardPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
+      {activePage === 'Hjem'      && <DashboardPage weeks={weeks} onNavigateToWeek={navigateToWeek} user={user} />}
       {activePage === 'Reisen'    && <JourneyPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
       {activePage === 'Uke'       && <HomePage weekId={activeWeek} onProgressChange={refreshProgress} />}
       {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}

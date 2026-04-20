@@ -34,7 +34,7 @@ function WeekBadge({ status }) {
   return <span className={styles.weekBadge}>🔒</span>
 }
 
-export default function Sidebar({ weeks = [], currentWeek, collapsed, onToggleCollapse, onNavigate }) {
+export default function Sidebar({ weeks = [], currentWeek, collapsed, onToggleCollapse, onNavigate, memberAccess }) {
   const doneCount = weeks.filter(w => w.status === 'done').length
   const progress  = (doneCount / 8) * 100
 
@@ -71,13 +71,13 @@ export default function Sidebar({ weeks = [], currentWeek, collapsed, onToggleCo
           {weeks.map(week => (
             <button
               key={week.id}
-              disabled={week.status === 'locked'}
+              disabled={week.status === 'locked' || !memberAccess}
               className={`${styles.weekItem} ${week.id === currentWeek ? styles.active : ''}`}
-              onClick={() => onNavigate('Uke', week.id)}
+              onClick={() => memberAccess && onNavigate('Uke', week.id)}
             >
-              <StatusDot status={week.status} />
+              <StatusDot status={memberAccess ? week.status : 'locked'} />
               Uke {week.id} – {week.title}
-              <WeekBadge status={week.status} />
+              {memberAccess ? <WeekBadge status={week.status} /> : <span className={styles.weekBadge}>🔒</span>}
             </button>
           ))}
         </div>
@@ -87,11 +87,13 @@ export default function Sidebar({ weeks = [], currentWeek, collapsed, onToggleCo
           {LIBRARY_ITEMS.map(item => (
             <button
               key={item.label}
-              className={styles.libItem}
-              onClick={() => onNavigate('Bibliotek', item.type)}
+              disabled={!memberAccess}
+              className={`${styles.libItem} ${!memberAccess ? styles.libItemLocked : ''}`}
+              onClick={() => memberAccess && onNavigate('Bibliotek', item.type)}
             >
               <span className={`${styles.libIcon} ${styles[item.type]}`}>{item.icon}</span>
               {item.label}
+              {!memberAccess && <span className={styles.weekBadge}>🔒</span>}
             </button>
           ))}
         </div>
