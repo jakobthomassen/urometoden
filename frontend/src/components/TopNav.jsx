@@ -117,7 +117,7 @@ function useMembershipLabel(user) {
   return { label, type }
 }
 
-export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, user, onLogout }) {
+export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, user, onLogout, memberAccess }) {
   const [menuOpen, setMenuOpen]     = useState(false)
   const menuRef                     = useRef(null)
   const { label: memberLabel, type: memberType } = useMembershipLabel(user)
@@ -138,20 +138,24 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, 
       <button className={styles.logo} onClick={() => onNavigate('Hjem')}>Uro</button>
 
       <div className={styles.navLinks}>
-        {NAV_TABS.map(tab => (
-          <button
-            key={tab.label}
-            disabled={!tab.active}
-            className={[
-              styles.navTab,
-              (activePage === tab.label || (tab.label === 'Reisen' && activePage === 'Uke')) ? styles.active : '',
-              !tab.active ? styles.disabled : '',
-            ].filter(Boolean).join(' ')}
-            onClick={() => tab.active && onNavigate(tab.label)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {NAV_TABS.map(tab => {
+          const gated = !memberAccess && (tab.label === 'Reisen' || tab.label === 'Bibliotek')
+          return (
+            <button
+              key={tab.label}
+              disabled={!tab.active}
+              className={[
+                styles.navTab,
+                (activePage === tab.label || (tab.label === 'Reisen' && activePage === 'Uke')) ? styles.active : '',
+                !tab.active ? styles.disabled : '',
+                gated ? styles.gated : '',
+              ].filter(Boolean).join(' ')}
+              onClick={() => tab.active && onNavigate(tab.label)}
+            >
+              {tab.label}{gated ? ' 🔒' : ''}
+            </button>
+          )
+        })}
       </div>
 
       <div className={styles.navRight}>

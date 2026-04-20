@@ -57,6 +57,9 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+.navTab.gated {
+  color: var(--text-3);
+}
 
 .navRight {
   display: flex;
