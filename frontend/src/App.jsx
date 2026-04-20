@@ -20,7 +20,12 @@ function getInitialDark() {
 }
 
 export default function App() {
-  const [user, setUser]                         = useState(undefined) // undefined=loading, null=unauthed, obj=authed
+  const [user, setUser] = useState(() => {
+    try {
+      const hint = JSON.parse(localStorage.getItem('user_hint') || 'null')
+      return hint !== null ? hint : undefined  // hint present → optimistic render; absent → show loading
+    } catch { return undefined }
+  })
   const [isDark, setIsDark]                     = useState(getInitialDark)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePage, setActivePage]             = useState('Hjem')
@@ -32,12 +37,17 @@ export default function App() {
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.ok ? r.json() : null)
-      .then(u => setUser(u))
+      .then(u => {
+        setUser(u)
+        if (u) localStorage.setItem('user_hint', JSON.stringify(u))
+        else   localStorage.removeItem('user_hint')
+      })
       .catch(() => setUser(null))
   }, [])
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
+    localStorage.removeItem('user_hint')
     setUser(null)
   }
 

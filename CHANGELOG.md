@@ -2,6 +2,20 @@
 
 ## 20.04.2026
 
+Implemented membership gating — non-members see a different dashboard (hero card, benefits grid, trial CTA) and cannot access Reisen, Bibliotek, or any week content. Nav tabs and sidebar items show lock state.
+
+Security: added session check to `/api/content` and `/api/weeks/[weekId]/content` — both were publicly accessible without auth.
+
+Security: added input validation to admin PATCH endpoint — `id` NaN check, `is_admin` 0/1, `membership` enum, `membership_expires_at` null or positive integer.
+
+Security: fixed OAuth callback to check `tokenRes.ok`, `userRes.ok`, and `googleUser.email` before proceeding — previously threw on any Google API failure.
+
+Performance: admin user list is now paginated server-side (`LIMIT`/`OFFSET`). API returns `{ results, total, memberCount, trialCount }`. Stats row counts are now accurate regardless of page.
+
+Performance: added `Cache-Control: public, max-age=3600` to content API endpoints.
+
+Performance: `App.jsx` now renders immediately from a `user_hint` localStorage cache — eliminates blank-screen flash on page load. Hint is updated after each `me.js` response and cleared on logout.
+
 Changed "Under utvikling" banner on login page from green to amber to match the daily hint style.
 
 Updated TODO security and performance sections — added findings from full codebase sweep: missing DB indexes, unbounded admin query, admin PATCH validation gap, audio path traversal, OAuth callback error handling, markdown XSS note, GDPR Article 9 flag.
