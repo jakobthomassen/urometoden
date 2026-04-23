@@ -13,6 +13,6 @@ export async function onRequest({ params, env, request }) {
   `).bind(parseInt(params.weekId)).all()
 
   return Response.json(results, {
-    headers: { 'Cache-Control': 'public, max-age=3600' },
+    headers: { 'Cache-Control': 'private, no-store' },
   })
 }
