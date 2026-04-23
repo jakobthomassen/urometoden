@@ -33,7 +33,7 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
   useEffect(() => {
     setLoading(true)
     const url = filter === 'all' ? '/api/content' : `/api/content?type=${filter}`
-    fetch(url)
+    fetch(url, { cache: 'no-store' })
       .then(r => r.json())
       .then(items => {
         setSections(filter === 'all' ? groupByType(items) : [{ type: filter, ...SECTION_META[filter], items }])
