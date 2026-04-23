@@ -9,9 +9,8 @@ export async function onRequestGet({ env, request, params }) {
     return new Response('Invalid key', { status: 400 })
   }
 
-  const object = await env.AUDIO_BUCKET.get(key, {
-    range: request.headers.get('Range') ?? undefined,
-  })
+  const rangeHeader = request.headers.get('Range')
+  const object = await env.AUDIO_BUCKET.get(key, rangeHeader ? { range: rangeHeader } : {})
   if (!object) return new Response('Not found', { status: 404 })
 
   const headers = new Headers()

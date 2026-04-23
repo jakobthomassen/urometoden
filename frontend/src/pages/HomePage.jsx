@@ -25,7 +25,7 @@ export default function HomePage({ weekId = 1, onProgressChange }) {
   useEffect(() => {
     setLoading(true)
     setCompletedItems(getCompletedItems(weekId))
-    fetch(`/api/weeks/${weekId}/content`)
+    fetch(`/api/weeks/${weekId}/content`, { cache: 'no-store' })
       .then(r => r.json())
       .then(items => setContent(items))
       .finally(() => setLoading(false))
