@@ -82,7 +82,7 @@ function FullscreenIcon() {
   )
 }
 
-export default function AudioPlayer({ src, type, title, info }) {
+export default function AudioPlayer({ src, type, title, info, autoFullscreen, onFullscreenClose }) {
   const audioRef = useRef(null)
   const [playing, setPlaying]         = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -93,6 +93,8 @@ export default function AudioPlayer({ src, type, title, info }) {
   // Ref so the keydown handler always sees the latest playing value
   const playingRef = useRef(playing)
   useEffect(() => { playingRef.current = playing }, [playing])
+
+  useEffect(() => { if (autoFullscreen) setFullscreen(true) }, [])
 
   // Sync playback events
   useEffect(() => {
@@ -178,7 +180,7 @@ export default function AudioPlayer({ src, type, title, info }) {
 
       <FullscreenPlayer
         open={fullscreen}
-        onClose={() => setFullscreen(false)}
+        onClose={() => { setFullscreen(false); onFullscreenClose?.() }}
         title={title}
         info={info}
         type={type}
