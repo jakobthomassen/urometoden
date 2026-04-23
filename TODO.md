@@ -33,22 +33,6 @@ Reflection text (personal emotional/mental-health data) likely qualifies as spec
 
 ### Performance
 
-**Missing DB indexes** *(high — scales poorly)*
-No indexes on columns used in search or ordering. Add at minimum:
-
-```sql
-CREATE INDEX idx_users_email      ON users(email);
-CREATE INDEX idx_users_name       ON users(name);
-CREATE INDEX idx_week_content_wid ON week_content(week_id);
-CREATE INDEX idx_tips_used_at     ON tips(used_at);
-CREATE INDEX idx_identities_uid   ON identities(user_id);
-```
-
-Without these, admin user search and week content queries do full table scans.
-
-**`SELECT *` on content endpoints** *(low)*
-`/api/content` and `/api/weeks/[weekId]/content` use `SELECT *`. Select only the columns the frontend actually consumes to reduce serialization size.
-
 ---
 
 ### Multi-provider auth — Apple Sign-In & account linking
@@ -118,33 +102,9 @@ CREATE TABLE user_reflections (
 
 First draft is live. Remaining:
 
-- **Dagens tanke** tab: add, list, delete tips (see below)
 - **Innhold** tab: add, edit, delete content items and week assignments
 - **Access rules enforcement**: which weeks/content are free vs. member-only? What does a non-member see — locked cards, a paywall prompt?
 - **Dev unlock button**: hide for non-admin users
-
----
-
-### Dagens tanke — rotating tips
-
-Replace hardcoded `TIPS` array in `DashboardPage.jsx` with a DB-backed rotation.
-
-**Schema addition (draft):**
-
-```sql
-CREATE TABLE tips (
-  id      INTEGER PRIMARY KEY AUTOINCREMENT,
-  body    TEXT NOT NULL,
-  used_at INTEGER  -- NULL = unused; epoch ms when last shown
-);
-```
-
-**API:**
-
-- `GET /api/tip` — picks random unused tip, marks it used. Resets all when exhausted.
-- Admin CRUD under `/api/admin/tips` — gated by `is_admin`.
-
-**Frontend:** cache today's tip in localStorage `{ tipId, body, date }`. Fetch new if date ≠ today.
 
 ---
 
@@ -168,16 +128,12 @@ Allow users to set a custom display name (separate from their Google name).
 
 ---
 
-### Avatar dropdown — full menu
+### Avatar dropdown — remaining
 
-Currently: Profil, Innstillinger, Personvern, Hjelp og støtte are disabled placeholders.
+Personvern and Hjelp og støtte are now wired. Still pending:
 
-Each needs a destination:
-
-- **Profil** → display name edit, account info
-- **Innstillinger** → theme (already in TopNav), notification preferences (future)
-- **Personvern** → link to privacy policy page
-- **Hjelp og støtte** → link to help page
+- **Profil** → display name edit (blocked on display name feature)
+- **Innstillinger** → no settings to show yet beyond theme toggle; revisit when notification preferences or other settings are added
 
 ---
 

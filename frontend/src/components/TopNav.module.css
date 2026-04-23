@@ -218,6 +218,24 @@
   opacity: 0.5;
 }
 
+.menuItemActive {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.menuItemActive:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
 .menuItemReset {
   display: block;
   width: 100%;
