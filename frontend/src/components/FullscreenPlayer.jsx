@@ -167,11 +167,34 @@ function SkipForwardIcon() {
   )
 }
 
+function VolumeIcon({ level }) {
+  if (level === 0) return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  )
+  if (level <= 0.5) return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </svg>
+  )
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    </svg>
+  )
+}
+
 export default function FullscreenPlayer({
   open, onClose,
   title, info, type,
   playing, currentTime, duration,
   onTogglePlay, onSkip, onScrubTo,
+  volume, onVolumeChange,
 }) {
   // Close on Escape
   useEffect(() => {
@@ -228,6 +251,18 @@ export default function FullscreenPlayer({
           <button className={styles.ctrlBtn} onClick={() => onSkip(15)} title="15 sek frem">
             <SkipForwardIcon />
           </button>
+        </div>
+        <div className={styles.volumeRow}>
+          <span className={styles.volumeIcon}><VolumeIcon level={volume ?? 0.5} /></span>
+          <input
+            type="range"
+            className={styles.volumeSlider}
+            min="0" max="1" step="0.01"
+            value={volume ?? 0.5}
+            style={{ '--fill': `${(volume ?? 0.5) * 100}%` }}
+            onChange={e => onVolumeChange?.(parseFloat(e.target.value))}
+            title={`Volum: ${Math.round((volume ?? 0.5) * 100)}%`}
+          />
         </div>
       </div>
     </div>

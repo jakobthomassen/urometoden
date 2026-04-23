@@ -48,6 +48,21 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function formatDuration(secs) {
+  const m = Math.floor(secs / 60)
+  const s = Math.round(secs % 60)
+  return s > 0 ? `${m}m ${s}s` : `${m}m`
+}
+
+function loadAudioDuration(key) {
+  return new Promise(resolve => {
+    const audio = new Audio(`/api/audio/${key}`)
+    audio.preload = 'metadata'
+    audio.onloadedmetadata = () => resolve(audio.duration)
+    audio.onerror = () => resolve(null)
+  })
+}
+
 function emptyForm(type) {
   return { id: '', type, title: '', meta: '', r2_key: '', abstract: '', body: '', prompt: '', weeks: [] }
 }
@@ -332,7 +347,14 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
       {showPicker && (
         <FilePicker
           currentKey={initial.r2_key}
-          onSelect={key => { set('r2_key', key); setShowPicker(false) }}
+          onSelect={async key => {
+            set('r2_key', key)
+            setShowPicker(false)
+            if (form.type === 'audio') {
+              const secs = await loadAudioDuration(key)
+              if (secs) set('meta', formatDuration(secs))
+            }
+          }}
           onClose={() => setShowPicker(false)}
         />
       )}
