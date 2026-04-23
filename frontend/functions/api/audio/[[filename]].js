@@ -14,7 +14,7 @@ export async function onRequestGet({ env, request, params }) {
   if (!await getSession(request, env)) return new Response('Unauthorized', { status: 401 })
   if (!env.AUDIO_BUCKET) return new Response('Bucket not configured', { status: 500 })
 
-  const key = params.filename
+  const key = Array.isArray(params.filename) ? params.filename.join('/') : params.filename
   if (!key || key.includes('..') || key.startsWith('/')) {
     return new Response('Invalid key', { status: 400 })
   }
