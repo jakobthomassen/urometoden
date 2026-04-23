@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { marked } from 'marked'
 import styles from './AdminPage.module.css'
+import AdminContentTab from './AdminContentTab'
 // DEV ONLY — remove before prod: bundles markdown files into the client build
 import changelogRaw from '../../../CHANGELOG.md?raw'
 import todoRaw      from '../../../TODO.md?raw'
@@ -385,12 +386,7 @@ export default function AdminPage({ user, onLogout }) {
 
         {activeTab === 'Daglige tips' && <TipsTab />}
 
-        {activeTab === 'Innhold' && (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholderTitle}>Innholdsadministrasjon</p>
-            <p className={styles.placeholderSub}>Ikke implementert ennå.</p>
-          </div>
-        )}
+        {activeTab === 'Innhold' && <AdminContentTab />}
 
         {activeTab === 'Prosjekt' && (
           <div className={styles.prosjekt}>
