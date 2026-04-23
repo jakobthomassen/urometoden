@@ -1,5 +1,15 @@
 import { getSession } from '../../lib/auth.js'
 
+function parseRange(header) {
+  if (!header) return undefined
+  const m = /^bytes=(\d*)-(\d*)$/.exec(header)
+  if (!m) return undefined
+  if (m[1] === '') return { suffix: parseInt(m[2]) }
+  const offset = parseInt(m[1])
+  if (m[2] === '') return { offset }
+  return { offset, length: parseInt(m[2]) - offset + 1 }
+}
+
 export async function onRequestGet({ env, request, params }) {
   if (!await getSession(request, env)) return new Response('Unauthorized', { status: 401 })
   if (!env.AUDIO_BUCKET) return new Response('Bucket not configured', { status: 500 })
@@ -9,8 +19,8 @@ export async function onRequestGet({ env, request, params }) {
     return new Response('Invalid key', { status: 400 })
   }
 
-  const rangeHeader = request.headers.get('Range')
-  const object = await env.AUDIO_BUCKET.get(key, rangeHeader ? { range: rangeHeader } : {})
+  const range = parseRange(request.headers.get('Range'))
+  const object = await env.AUDIO_BUCKET.get(key, range ? { range } : {})
   if (!object) return new Response('Not found', { status: 404 })
 
   const headers = new Headers()
