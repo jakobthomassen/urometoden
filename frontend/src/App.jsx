@@ -10,6 +10,7 @@ import BibliotekPage from './pages/BibliotekPage'
 import WelcomeModal from './components/WelcomeModal'
 import OnboardingPage from './pages/OnboardingPage'
 import AdminPage from './pages/AdminPage'
+import HelpPage from './pages/HelpPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
 import { isMember } from './utils/membership'
 
@@ -31,6 +32,7 @@ export default function App() {
   const [activePage, setActivePage]             = useState('Hjem')
   const [activeWeek, setActiveWeek]             = useState(1)
   const [bibliotekFilter, setBibliotekFilter]   = useState('all')
+  const [helpSection, setHelpSection]           = useState('hjelp')
   const { weeks, refresh: refreshProgress }     = useWeekProgress()
   const memberAccess = isMember(user)
 
@@ -58,7 +60,8 @@ export default function App() {
     }
     setActivePage(page)
     if (page === 'Bibliotek' && data) setBibliotekFilter(data)
-    if (page === 'Uke' && data)       setActiveWeek(data)
+    if (page === 'Uke'       && data) setActiveWeek(data)
+    if (page === 'Hjelp'     && data) setHelpSection(data)
   }
 
   function navigateToWeek(weekId) {
@@ -110,6 +113,7 @@ export default function App() {
       {activePage === 'Reisen'    && <JourneyPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
       {activePage === 'Uke'       && <HomePage weekId={activeWeek} onProgressChange={refreshProgress} />}
       {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
+      {activePage === 'Hjelp'     && <HelpPage section={helpSection} />}
       {showRightPanel && <RightPanel />}
     </div>
   )

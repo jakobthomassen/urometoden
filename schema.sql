@@ -45,3 +45,9 @@ CREATE TABLE IF NOT EXISTS week_content (
   PRIMARY KEY (week_id, content_id),
   FOREIGN KEY (content_id) REFERENCES content_items(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_email      ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_name       ON users(name);
+CREATE INDEX IF NOT EXISTS idx_week_content_wid ON week_content(week_id);
+CREATE INDEX IF NOT EXISTS idx_tips_used_at     ON tips(used_at);
+CREATE INDEX IF NOT EXISTS idx_identities_uid   ON identities(user_id);

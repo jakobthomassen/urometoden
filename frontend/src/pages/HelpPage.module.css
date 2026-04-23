@@ -1,0 +1,171 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Tab bar */
+.tabBar {
+  display: flex;
+  padding: 0 32px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  margin-bottom: -0.5px;
+  font-family: var(--font-body);
+}
+.tab:hover { color: var(--text); }
+.tabActive {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* Main scroll area */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-md) transparent;
+}
+
+/* Content wrapper */
+.content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* Sections */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.metaText {
+  font-size: 11px;
+  color: var(--text-3);
+  margin: 0;
+}
+
+.bodyText {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.list strong { color: var(--text); font-weight: 500; }
+
+.inlineLink {
+  color: var(--accent);
+  text-decoration: none;
+}
+.inlineLink:hover { text-decoration: underline; }
+
+.contactLink {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 8px 14px;
+  border: 0.5px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-bg);
+  transition: opacity 0.12s;
+  align-self: flex-start;
+}
+.contactLink:hover { opacity: 0.8; }
+
+/* FAQ */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.faqItem {
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.faqQ {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  gap: 12px;
+}
+.faqQ:hover { background: var(--surface2); }
+
+.faqChevron {
+  font-size: 11px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.faqA {
+  padding: 0 16px 14px;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+  border-top: 0.5px solid var(--border);
+  padding-top: 12px;
+}
+
+.faqA strong { color: var(--text); font-weight: 500; }
+
+/* Inline code */
+code {
+  font-size: 11px;
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}

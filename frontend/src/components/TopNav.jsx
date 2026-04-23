@@ -32,7 +32,12 @@ function MoonIcon() {
   )
 }
 
-const DISABLED_ITEMS = ['Profil', 'Innstillinger', 'Personvern', 'Hjelp og støtte']
+const MENU_ITEMS = [
+  { label: 'Profil',         disabled: true  },
+  { label: 'Innstillinger',  disabled: true  },
+  { label: 'Personvern',     disabled: false, page: 'Hjelp', section: 'personvern' },
+  { label: 'Hjelp og støtte', disabled: false, page: 'Hjelp', section: 'hjelp' },
+]
 
 function resetLocalStorage() {
   localStorage.removeItem('uro_visited')
@@ -47,7 +52,7 @@ function getInitials(name) {
   return name.split(' ').slice(0, 2).map(n => n[0].toUpperCase()).join('')
 }
 
-function ProfileMenu({ user, onClose, onLogout }) {
+function ProfileMenu({ user, onClose, onLogout, onNavigate }) {
   const [resetDone, setResetDone] = useState(false)
 
   function handleReset() {
@@ -68,9 +73,14 @@ function ProfileMenu({ user, onClose, onLogout }) {
 
       <div className={styles.menuDivider} />
 
-      {DISABLED_ITEMS.map(label => (
-        <button key={label} className={styles.menuItem} disabled>
-          {label}
+      {MENU_ITEMS.map(item => (
+        <button
+          key={item.label}
+          className={item.disabled ? styles.menuItem : styles.menuItemActive}
+          disabled={item.disabled}
+          onClick={item.disabled ? undefined : () => { onClose(); onNavigate(item.page, item.section) }}
+        >
+          {item.label}
         </button>
       ))}
 
@@ -185,6 +195,7 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, 
               user={user}
               onClose={() => setMenuOpen(false)}
               onLogout={onLogout}
+              onNavigate={onNavigate}
             />
           )}
         </div>

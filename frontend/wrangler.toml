@@ -13,6 +13,7 @@ binding = 'AUDIO_BUCKET'
 bucket_name = 'audio-files'
 
 [[d1_databases]]
-binding      = 'DB'
-database_name = 'urometoden-db'
-database_id   = '05016167-addb-4aeb-81f4-3cff81bc88e7'
+binding         = 'DB'
+database_name   = 'urometoden-db'
+database_id     = '05016167-addb-4aeb-81f4-3cff81bc88e7'
+migrations_dir  = '../migrations'

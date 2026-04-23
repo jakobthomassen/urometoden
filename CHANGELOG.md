@@ -1,5 +1,23 @@
 # Changelog
 
+## 23.04.2026
+
+Created Help page with two tabs — Hjelp og støtte (FAQ + contact) and Personvern (full Norwegian privacy policy covering GDPR rights, data processors, cookie policy, and contact). Accessible via the avatar dropdown.
+
+Wired "Personvern" and "Hjelp og støtte" in the avatar dropdown — both navigate to the correct tab. Profil and Innstillinger remain disabled pending display name and settings features.
+
+Performance: added DB indexes on `users(email)`, `users(name)`, `week_content(week_id)`, `tips(used_at)`, and `identities(user_id)` — migration 004. Eliminates full table scans on admin search, week content joins, and tip ordering.
+
+Dropped `SELECT *` TODO item — all content_items columns are consumed by the frontend (body/abstract/prompt by modals, r2_key reserved for audio).
+
+---
+
+## 21.04.2026
+
+Implemented daily hint system ("Dagens tanke") — a single tip is picked randomly at system level and shown to all users on the same day. Tips are DB-backed (`tips` table) with a 7-day grace period preventing recently used tips from re-entering rotation immediately on reset. Admin CRUD under `/api/admin/tips`. Frontend caches today's tip in localStorage keyed by date.
+
+---
+
 ## 20.04.2026
 
 Implemented membership gating — non-members see a different dashboard (hero card, benefits grid, trial CTA) and cannot access Reisen, Bibliotek, or any week content. Nav tabs and sidebar items show lock state.
@@ -41,10 +59,12 @@ Made "Logg ut" in profile dropdown functional, red, and moved to bottom. Renamed
 ## 16.04.2026
 
 Migrated `users` table to multi-provider auth schema — replaced `google_id` column with a separate `identities` table.
+
 - Supports Google, Apple, and email/password without schema changes per provider.
 - `callback.js` now upserts into `users` by email and writes a linked row to `identities`.
 
 Built admin dashboard at `/admin`, gated by `is_admin` flag.
+
 - User list with name search, membership status badges, and admin toggle.
 - Membership controls per user: 7-day trial, 1-month membership, revoke access.
 - Placeholder tabs for daily tips and content management.
@@ -56,6 +76,7 @@ Added dynamic membership badge to TopNav — counts down days/hours remaining fo
 `/api/auth/me` now reads live from D1 instead of trusting JWT claims — membership and admin status take effect immediately without requiring re-login.
 
 Implemented Google Identity Services authentication flow.
+
 - Users sign in with Google OAuth. Session issued as a signed JWT in an httpOnly cookie (30-day expiry).
 - Admin access controlled by `is_admin` flag in the `users` table.
 
