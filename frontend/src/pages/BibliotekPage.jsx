@@ -3,6 +3,7 @@ import styles from './BibliotekPage.module.css'
 import ContentCard from '../components/ContentCard'
 import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
+import AudioPlayer from '../components/AudioPlayer'
 import { SECTION_META, FILTER_OPTIONS } from '../data/library'
 
 // Group a flat array of content_items by type into the sections shape the UI expects
@@ -24,6 +25,7 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
   const [loading, setLoading]             = useState(true)
   const [activeReflection, setActiveReflection] = useState(null)
   const [activeCase, setActiveCase]       = useState(null)
+  const [activeAudio, setActiveAudio]     = useState(null)
 
   // Sync filter from parent (sidebar navigation) without a separate fetch effect
   useEffect(() => { setFilter(initialFilter ?? 'all') }, [initialFilter])
@@ -44,6 +46,16 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
 
       <ReflectionModal item={activeReflection} onClose={() => setActiveReflection(null)} />
       <CaseModal       item={activeCase}        onClose={() => setActiveCase(null)} />
+      {activeAudio && (
+        <AudioPlayer
+          src={`/api/audio/${activeAudio.r2_key}`}
+          title={activeAudio.title}
+          info={activeAudio.meta}
+          type="Lyd"
+          autoFullscreen
+          onFullscreenClose={() => setActiveAudio(null)}
+        />
+      )}
 
       <div className={styles.header}>
         <h1 className={styles.title}>Bibliotek</h1>
@@ -82,6 +94,7 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
                     onClick={
                       section.type === 'reflect' ? () => setActiveReflection(item)
                       : section.type === 'case'  ? () => setActiveCase(item)
+                      : section.type === 'audio' ? () => item.r2_key && setActiveAudio(item)
                       : undefined
                     }
                   />
