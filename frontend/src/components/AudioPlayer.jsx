@@ -190,6 +190,8 @@ export default function AudioPlayer({ src, type, title, info, autoFullscreen, on
         onTogglePlay={togglePlay}
         onSkip={skip}
         onScrubTo={scrubTo}
+        volume={volume}
+        onVolumeChange={setVolume}
       />
 
       <div className={styles.top}>
