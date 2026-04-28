@@ -61,18 +61,25 @@ export async function onRequestGet({ env, request }) {
     ON CONFLICT(provider, provider_id) DO NOTHING
   `).bind(user.id, googleUser.sub, now).run()
 
-  // Sign session JWT (30 days)
+  // Create a revocable session row
+  const sid      = crypto.randomUUID()
+  const maxAge   = 60 * 60 * 24 * 30
+  await env.DB.prepare(
+    'INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
+  ).bind(sid, user.id, now, now + maxAge * 1000).run()
+
+  // Sign session JWT (30 days) — includes sid for revocation checks
   const token = await signJwt(
-    { sub: user.id, email: user.email, name: user.name, is_admin: user.is_admin },
+    { sub: user.id, email: user.email, name: user.name, is_admin: user.is_admin, sid },
     env.AUTH_SECRET
   )
 
   const secure  = url.protocol === 'https:' ? '; Secure' : ''
-  const maxAge  = 60 * 60 * 24 * 30
   const headers = new Headers()
   headers.set('Location', '/')
   headers.append('Set-Cookie', `oauth_state=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`)
   headers.append('Set-Cookie', `session=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`)
+
 
   return new Response(null, { status: 302, headers })
 }

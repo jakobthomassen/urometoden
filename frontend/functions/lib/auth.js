@@ -4,7 +4,18 @@ export async function getSession(request, env) {
   const cookies = parseCookies(request.headers.get('Cookie') || '')
   const token   = cookies.session
   if (!token) return null
-  return verifyJwt(token, env.AUTH_SECRET)
+  const payload = await verifyJwt(token, env.AUTH_SECRET)
+  if (!payload) return null
+
+  // If the JWT carries a session ID, verify it hasn't been revoked
+  if (payload.sid) {
+    const row = await env.DB.prepare(
+      'SELECT revoked FROM sessions WHERE id = ?'
+    ).bind(payload.sid).first()
+    if (!row || row.revoked) return null
+  }
+
+  return payload
 }
 
 export async function requireAdmin(request, env) {

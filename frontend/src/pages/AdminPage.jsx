@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import styles from './AdminPage.module.css'
 import AdminContentTab from './AdminContentTab'
 // DEV ONLY — remove before prod: bundles markdown files into the client build
@@ -144,21 +145,31 @@ function TipsTab() {
   }
 
   const unused = tips.filter(t => !t.used_at)
-  const used   = tips.filter(t =>  t.used_at)
+  const used   = tips.filter(t =>  t.used_at).sort((a, b) => b.used_at - a.used_at)
 
   return (
     <div className={styles.tipsTab}>
-      <div className={styles.tipsAdd}>
-        <textarea
-          className={styles.tipsTextarea}
-          placeholder="Skriv inn en ny tanke…"
-          value={newBody}
-          onChange={e => setNewBody(e.target.value)}
-          rows={3}
-        />
-        <button className={styles.tipsAddBtn} onClick={handleAdd} disabled={saving || !newBody.trim()}>
-          {saving ? 'Lagrer…' : 'Legg til'}
-        </button>
+
+      <div className={styles.tipsCallout}>
+        <strong>Hvordan fungerer det?</strong> Ett tips sendes automatisk til brukerne hver dag.
+        Tips trekkes i rekkefølge fra køen nedenfor. Hold minst 7 tips i kø.
+        {unused.length > 0 && <span className={styles.tipsCoverage}> {unused.length} tips = ca. {unused.length} dager dekket.</span>}
+      </div>
+
+      <div className={styles.tipsAddSection}>
+        <div className={styles.tipsSectionLabel}>Nytt tips</div>
+        <div className={styles.tipsAdd}>
+          <textarea
+            className={styles.tipsTextarea}
+            placeholder="Skriv inn en tanke eller refleksjon som sendes til brukerne…"
+            value={newBody}
+            onChange={e => setNewBody(e.target.value)}
+            rows={3}
+          />
+          <button className={styles.tipsAddBtn} onClick={handleAdd} disabled={saving || !newBody.trim()}>
+            {saving ? 'Lagrer…' : 'Legg til'}
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -166,16 +177,19 @@ function TipsTab() {
       ) : (
         <>
           <div className={styles.tipsSection}>
-            <div className={styles.tipsSectionLabel}>Ubrukt ({unused.length})</div>
+            <div className={styles.tipsSectionLabel}>
+              I kø — vises fremover
+              {unused.length === 0 && <span className={styles.tipsWarning}> · Tomt! Legg til tips.</span>}
+            </div>
             {unused.length === 0
-              ? <div className={styles.empty}>Ingen ubrukte tips.</div>
-              : unused.map(t => <TipRow key={t.id} tip={t} onDelete={handleDelete} />)
+              ? <div className={styles.empty}>Ingen tips i kø. Legg til nye tips ovenfor.</div>
+              : unused.map((t, i) => <TipRow key={t.id} tip={t} isNext={i === 0} onDelete={handleDelete} />)
             }
           </div>
           <div className={styles.tipsSection}>
-            <div className={styles.tipsSectionLabel}>Brukt ({used.length})</div>
+            <div className={styles.tipsSectionLabel}>Tidligere sendt</div>
             {used.length === 0
-              ? <div className={styles.empty}>Ingen brukte tips.</div>
+              ? <div className={styles.empty}>Ingen tips sendt ennå.</div>
               : used.map(t => <TipRow key={t.id} tip={t} onDelete={handleDelete} />)
             }
           </div>
@@ -185,16 +199,16 @@ function TipsTab() {
   )
 }
 
-function TipRow({ tip, onDelete }) {
+function TipRow({ tip, isNext = false, onDelete }) {
   const since = timeSinceUsed(tip.used_at)
   return (
-    <div className={styles.tipRow}>
-      <div className={styles.tipBody}>{tip.body}</div>
+    <div className={`${styles.tipRow} ${isNext ? styles.tipRowNext : ''}`}>
+      <div className={styles.tipRowLeft}>
+        {isNext && <span className={styles.tipNextBadge}>Neste</span>}
+        <div className={styles.tipBody}>{tip.body}</div>
+      </div>
       <div className={styles.tipMeta}>
-        {since
-          ? <span className={styles.tipUsed}>{since}</span>
-          : <span className={styles.tipUnused}>Ikke brukt</span>
-        }
+        {since && <span className={styles.tipUsed}>{since}</span>}
         <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => onDelete(tip.id)}>
           Slett
         </button>
@@ -206,7 +220,7 @@ function TipRow({ tip, onDelete }) {
 // DEV ONLY — entire ProsjektDoc component and 'Prosjekt' tab to be removed before prod
 function ProsjektDoc({ label, raw }) {
   const [open, setOpen] = useState(true)
-  const html = marked.parse(raw)
+  const html = DOMPurify.sanitize(marked.parse(raw))
   return (
     <div className={styles.prosjektDoc}>
       <button className={styles.prosjektDocHeader} onClick={() => setOpen(o => !o)}>
@@ -273,7 +287,7 @@ export default function AdminPage({ user, onLogout }) {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.logo}>Uro</span>
+          <a className={styles.logo} href="/" title="Tilbake til appen">Uro</a>
           <span className={styles.adminLabel}>Admin</span>
         </div>
         <div className={styles.headerRight}>
