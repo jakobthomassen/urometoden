@@ -3,10 +3,10 @@ import styles from './BibliotekPage.module.css'
 import ContentCard from '../components/ContentCard'
 import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
+import AudioModal from '../components/AudioModal'
 import AudioPlayer from '../components/AudioPlayer'
 import { SECTION_META, FILTER_OPTIONS } from '../data/library'
 
-// Group a flat array of content_items by type into the sections shape the UI expects
 function groupByType(items) {
   const order = ['audio', 'case', 'reflect', 'video']
   const map = {}
@@ -20,14 +20,14 @@ function groupByType(items) {
 }
 
 export default function BibliotekPage({ initialFilter = 'all' }) {
-  const [filter, setFilter]               = useState(initialFilter)
-  const [sections, setSections]           = useState([])
-  const [loading, setLoading]             = useState(true)
+  const [filter, setFilter]                     = useState(initialFilter)
+  const [sections, setSections]                 = useState([])
+  const [loading, setLoading]                   = useState(true)
   const [activeReflection, setActiveReflection] = useState(null)
-  const [activeCase, setActiveCase]       = useState(null)
-  const [activeAudio, setActiveAudio]     = useState(null)
+  const [activeCase, setActiveCase]             = useState(null)
+  const [activeAudio, setActiveAudio]           = useState(null)
+  const [playingAudio, setPlayingAudio]         = useState(null)
 
-  // Sync filter from parent (sidebar navigation) without a separate fetch effect
   useEffect(() => { setFilter(initialFilter ?? 'all') }, [initialFilter])
 
   useEffect(() => {
@@ -41,19 +41,29 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
       .finally(() => setLoading(false))
   }, [filter])
 
+  function handlePlay(item) {
+    setActiveAudio(null)
+    setPlayingAudio(item)
+  }
+
   return (
     <main className={styles.main}>
 
       <ReflectionModal item={activeReflection} onClose={() => setActiveReflection(null)} />
       <CaseModal       item={activeCase}        onClose={() => setActiveCase(null)} />
-      {activeAudio && (
+      <AudioModal
+        item={activeAudio}
+        onClose={() => setActiveAudio(null)}
+        onPlay={handlePlay}
+      />
+      {playingAudio && (
         <AudioPlayer
-          src={`/api/audio/${activeAudio.r2_key}`}
-          title={activeAudio.title}
-          info={activeAudio.meta}
+          src={`/api/audio/${playingAudio.r2_key}`}
+          title={playingAudio.title}
+          info={playingAudio.abstract}
           type="Lyd"
           autoFullscreen
-          onFullscreenClose={() => setActiveAudio(null)}
+          onFullscreenClose={() => setPlayingAudio(null)}
         />
       )}
 
@@ -90,11 +100,13 @@ export default function BibliotekPage({ initialFilter = 'all' }) {
                     type={section.type}
                     label={section.tag}
                     title={item.title}
+                    abstract={item.abstract}
                     meta={item.meta}
+                    weeks={item.weeks}
                     onClick={
                       section.type === 'reflect' ? () => setActiveReflection(item)
                       : section.type === 'case'  ? () => setActiveCase(item)
-                      : section.type === 'audio' ? () => item.r2_key && setActiveAudio(item)
+                      : section.type === 'audio' ? () => setActiveAudio(item)
                       : undefined
                     }
                   />

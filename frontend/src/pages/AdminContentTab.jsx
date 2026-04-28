@@ -271,16 +271,20 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
           </div>
         )}
 
-        {/* Body — case only */}
-        {form.type === 'case' && (
+        {/* Body — case and audio */}
+        {(form.type === 'case' || form.type === 'audio') && (
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Tekst *</label>
+            <label className={styles.fieldLabel}>
+              {form.type === 'audio' ? <>Beskrivelse<span className={styles.optional}> (valgfri)</span></> : 'Tekst *'}
+            </label>
             <textarea
               className={styles.textarea}
               value={form.body}
               onChange={e => set('body', e.target.value)}
-              rows={10}
-              placeholder="Skriv inn caseteksten. Avsnitt skilles med tom linje."
+              rows={form.type === 'audio' ? 4 : 10}
+              placeholder={form.type === 'audio'
+                ? 'Lengre beskrivelse som vises i popup-visningen…'
+                : 'Skriv inn caseteksten. Avsnitt skilles med tom linje.'}
             />
           </div>
         )}
