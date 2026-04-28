@@ -1,5 +1,35 @@
 # Changelog
 
+## 29.04.2026
+
+Implemented session revocation — login now creates a row in a new `sessions` table (migration 005) containing a UUID `sid`, expiry, and `revoked` flag. The `sid` is embedded in the JWT. `getSession` rejects any token whose `sid` is missing or marked revoked. Logout sets `revoked = 1` in the DB before clearing the cookie, so captured tokens are immediately dead. `me.js` now routes through `getSession` instead of raw `verifyJwt`.
+
+Closed audio path traversal — R2 key validation now includes an extension allowlist (`.mp3 .m4a .aac .ogg .wav .flac`), in addition to the existing `..` and leading-slash checks.
+
+Added DOMPurify to the admin markdown renderer — `marked.parse()` output is sanitized before `dangerouslySetInnerHTML` in the Prosjekt tab.
+
+---
+
+## 28.04.2026
+
+Implemented admin Innhold tab — full content management with type selector (2×2 grid), per-type form, R2 file picker showing used/available files, week assignment with position ordering, and create/edit/delete. Admin form places file picker first for audio/video; selecting a file auto-fetches duration and formats it as "Xm Ys". Content list shows column headers, type badges, abstract preview, duration, and an amber warning on items missing a required file.
+
+Improved admin Daglige tips tab — callout explaining the rotation system, days-of-coverage count, "Neste" badge on the first queued tip, renamed section to "I kø — vises fremover", tips sorted newest-first in the sent archive.
+
+Introduced AudioModal — clicking an audio card in Bibliotek opens a popup showing title, short descriptor, duration, week assignments, and optional description. "Lytt" button in the modal launches the fullscreen player.
+
+Updated content cards — now show abstract (mini descriptor), duration, and week chips below the title.
+
+Added volume slider to fullscreen player, synced with the mini player.
+
+Built `/api/audio/[[filename]]` — authenticated R2 streaming endpoint with proper HTTP Range header parsing (converts `bytes=N-M` to `{ offset, length }` R2 range objects). Catch-all route handles keys with path separators.
+
+Content API (`/api/content`) now joins `week_content` and returns a `weeks` array per item. Both content endpoints changed to `Cache-Control: private, no-store`.
+
+Admin logo is now a link back to the main app.
+
+---
+
 ## 23.04.2026
 
 Created Help page with two tabs — Hjelp og støtte (FAQ + contact) and Personvern (full Norwegian privacy policy covering GDPR rights, data processors, cookie policy, and contact). Accessible via the avatar dropdown.

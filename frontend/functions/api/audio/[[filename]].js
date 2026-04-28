@@ -15,7 +15,7 @@ export async function onRequestGet({ env, request, params }) {
   if (!env.AUDIO_BUCKET) return new Response('Bucket not configured', { status: 500 })
 
   const key = Array.isArray(params.filename) ? params.filename.join('/') : params.filename
-  if (!key || key.includes('..') || key.startsWith('/')) {
+  if (!key || key.includes('..') || key.startsWith('/') || !/\.(mp3|m4a|aac|ogg|wav|flac)$/i.test(key)) {
     return new Response('Invalid key', { status: 400 })
   }
 

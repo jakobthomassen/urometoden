@@ -1,11 +1,7 @@
-import { verifyJwt, parseCookies } from '../../lib/jwt.js'
+import { getSession } from '../../lib/auth.js'
 
 export async function onRequestGet({ env, request }) {
-  const cookies = parseCookies(request.headers.get('Cookie'))
-  const token   = cookies.session
-  if (!token) return new Response('Unauthorized', { status: 401 })
-
-  const payload = await verifyJwt(token, env.AUTH_SECRET)
+  const payload = await getSession(request, env)
   if (!payload) return new Response('Unauthorized', { status: 401 })
 
   // Fetch live from DB so membership and is_admin are always current

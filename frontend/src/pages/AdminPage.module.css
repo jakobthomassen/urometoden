@@ -26,7 +26,10 @@
   font-family: var(--font-script);
   font-size: 22px;
   color: var(--text);
+  text-decoration: none;
+  transition: opacity 0.14s;
 }
+.logo:hover { opacity: 0.65; }
 
 .adminLabel {
   font-size: 11px;
@@ -366,8 +369,36 @@
 .tipsTab {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
   max-width: 680px;
+}
+
+.tipsCallout {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+}
+
+.tipsCoverage {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.tipsWarning {
+  color: var(--amber, #c4a46b);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tipsAddSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .tipsAdd {
@@ -433,8 +464,33 @@
   border-radius: var(--radius);
 }
 
-.tipBody {
+.tipRowNext {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.tipRowLeft {
   flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tipNextBadge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tipBody {
   font-size: 13px;
   color: var(--text);
   line-height: 1.5;

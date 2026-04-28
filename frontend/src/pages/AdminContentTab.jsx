@@ -238,18 +238,40 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
           <span className={styles.fieldHint}>Unik nøkkel. Auto-generert fra tittel — endre kun ved behov.</span>
         </div>
 
-        {/* Meta — duration/subtitle for audio, video, case */}
+        {/* File picker — audio and video (first, since it auto-fills duration) */}
+        {needsFile && (
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>
+              {form.type === 'audio' ? 'Lydfil' : 'Videofil'} *
+            </label>
+            <div className={styles.fileRow}>
+              {form.r2_key
+                ? <span className={styles.fileSelected}>{form.r2_key}</span>
+                : <span className={styles.fileNone}>Ingen fil valgt</span>
+              }
+              <button type="button" className={styles.fileBtn} onClick={() => setShowPicker(true)}>
+                {form.r2_key ? 'Bytt fil' : 'Velg fil…'}
+              </button>
+              {form.r2_key && (
+                <button type="button" className={styles.fileClear} onClick={() => set('r2_key', '')}>✕</button>
+              )}
+            </div>
+            {!form.r2_key && <span className={styles.fieldHint}>Velger du en lydfil fylles varighet inn automatisk.</span>}
+          </div>
+        )}
+
+        {/* Meta — duration for audio/video (auto-filled), subtitle for case */}
         {(needsFile || form.type === 'case') && (
           <div className={styles.field}>
             <label className={styles.fieldLabel}>
               {needsFile ? 'Varighet' : 'Undertittel'}
-              <span className={styles.optional}> (valgfri)</span>
+              <span className={styles.optional}> (valgfri{needsFile ? ', auto-utfylt fra fil' : ''})</span>
             </label>
             <input
               className={styles.input}
               value={form.meta}
               onChange={e => set('meta', e.target.value)}
-              placeholder={needsFile ? '18 min' : 'F.eks. «Jobbangst»'}
+              placeholder={needsFile ? 'F.eks. 18m 32s' : 'F.eks. «Jobbangst»'}
             />
           </div>
         )}
@@ -258,7 +280,7 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
         {form.type !== 'reflect' && (
           <div className={styles.field}>
             <label className={styles.fieldLabel}>
-              Sammendrag
+              {form.type === 'audio' ? 'Kort beskrivelse' : 'Sammendrag'}
               <span className={styles.optional}> (vises på kortet)</span>
             </label>
             <textarea
@@ -266,16 +288,16 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
               value={form.abstract}
               onChange={e => set('abstract', e.target.value)}
               rows={2}
-              placeholder="Kort beskrivelse som vises i kortvisning…"
+              placeholder={form.type === 'audio' ? 'F.eks. «Mann, 36 · Sjalusi»' : 'Kort beskrivelse som vises i kortvisning…'}
             />
           </div>
         )}
 
-        {/* Body — case and audio */}
+        {/* Body — case full text, audio modal description */}
         {(form.type === 'case' || form.type === 'audio') && (
           <div className={styles.field}>
             <label className={styles.fieldLabel}>
-              {form.type === 'audio' ? <>Beskrivelse<span className={styles.optional}> (valgfri)</span></> : 'Tekst *'}
+              {form.type === 'audio' ? <>Beskrivelse<span className={styles.optional}> (vises i popup)</span></> : 'Tekst *'}
             </label>
             <textarea
               className={styles.textarea}
@@ -283,7 +305,7 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
               onChange={e => set('body', e.target.value)}
               rows={form.type === 'audio' ? 4 : 10}
               placeholder={form.type === 'audio'
-                ? 'Lengre beskrivelse som vises i popup-visningen…'
+                ? 'Lengre beskrivelse som vises når brukeren åpner lydkortet…'
                 : 'Skriv inn caseteksten. Avsnitt skilles med tom linje.'}
             />
           </div>
@@ -304,32 +326,14 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
           </div>
         )}
 
-        {/* File picker — audio and video */}
-        {needsFile && (
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>
-              {form.type === 'audio' ? 'Lydfil' : 'Videofil'} *
-            </label>
-            <div className={styles.fileRow}>
-              {form.r2_key
-                ? <span className={styles.fileSelected}>{form.r2_key}</span>
-                : <span className={styles.fileNone}>Ingen fil valgt</span>
-              }
-              <button type="button" className={styles.fileBtn} onClick={() => setShowPicker(true)}>
-                {form.r2_key ? 'Bytt fil' : 'Velg fil…'}
-              </button>
-              {form.r2_key && (
-                <button type="button" className={styles.fileClear} onClick={() => set('r2_key', '')}>✕</button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Week assignment */}
         <div className={styles.fieldDivider} />
         <div className={styles.field}>
           <label className={styles.fieldLabel}>Ukestilordning</label>
-          <span className={styles.fieldHint}>Velg hvilke uker dette innholdet skal vises i, og posisjonen det havner på.</span>
+          <span className={styles.fieldHint}>
+            Velg hvilke uker dette innholdet skal vises i.
+            Posisjonsnummeret bestemmer rekkefølgen innenfor uken (lavere tall = vises først).
+          </span>
           <WeekPicker value={form.weeks} onChange={w => set('weeks', w)} />
         </div>
 
@@ -438,22 +442,27 @@ function ContentModal({ item, onSave, onClose }) {
 // ─── ContentRow ─────────────────────────────────────────────────────────────
 
 function ContentRow({ item, onEdit, onDelete }) {
-  const typeInfo = TYPES.find(t => t.type === item.type)
+  const typeInfo   = TYPES.find(t => t.type === item.type)
+  const needsFile  = item.type === 'audio' || item.type === 'video'
+  const missingFile = needsFile && !item.r2_key
   return (
-    <div className={styles.contentRow}>
-      <div className={styles.rowLeft}>
+    <div className={`${styles.contentRow} ${missingFile ? styles.contentRowWarn : ''}`}>
+      <div className={styles.rowType}>
         <span className={`${styles.typeBadge} ${styles[`typeBadge_${item.type}`]}`}>
           {typeInfo?.icon} {TYPE_LABEL[item.type]}
         </span>
-        <div>
-          <div className={styles.rowTitle}>{item.title}</div>
-          <div className={styles.rowId}>{item.id}{item.r2_key ? ` · ${item.r2_key}` : ''}</div>
-        </div>
+        {missingFile && <span className={styles.rowMissingFile} title="Mangler lydfil">!</span>}
+      </div>
+      <div className={styles.rowTitle}>
+        <div className={styles.rowTitleText}>{item.title}</div>
+        {item.abstract && <div className={styles.rowAbstract}>{item.abstract}</div>}
+        {item.meta && <div className={styles.rowMeta}>{item.meta}</div>}
       </div>
       <div className={styles.rowWeeks}>
         {item.weeks?.sort((a, b) => a.week_id - b.week_id).map(w => (
           <span key={w.week_id} className={styles.weekTag}>Uke {w.week_id}</span>
         ))}
+        {item.weeks?.length === 0 && <span className={styles.rowNoWeek}>Ikke tilordnet</span>}
       </div>
       <div className={styles.rowActions}>
         <button className={styles.btn} onClick={() => onEdit(item)}>Rediger</button>
@@ -498,9 +507,18 @@ export default function AdminContentTab() {
   }
 
   const filtered = filter === 'all' ? items : items.filter(i => i.type === filter)
+  const incomplete = items.filter(i => (i.type === 'audio' || i.type === 'video') && !i.r2_key).length
 
   return (
     <div className={styles.tab}>
+
+      <div className={styles.contentCallout}>
+        Innhold her er det brukerne ser i <strong>Bibliotek</strong> og i ukene. Koble innhold til uker via «Ukestilordning» i redigeringsvisningen.
+        {incomplete > 0 && (
+          <span className={styles.contentWarning}> {incomplete} {incomplete === 1 ? 'element mangler' : 'elementer mangler'} lydfil.</span>
+        )}
+      </div>
+
       <div className={styles.toolbar}>
         <div className={styles.typeFilter}>
           {['all', 'audio', 'video', 'case', 'reflect'].map(t => (
@@ -522,22 +540,35 @@ export default function AdminContentTab() {
       {loading ? (
         <div className={styles.empty}>Laster…</div>
       ) : filtered.length === 0 ? (
-        <div className={styles.empty}>
-          {filter === 'all'
-            ? 'Ingen innholdsenheter ennå. Klikk «+ Nytt innhold» for å starte.'
-            : `Ingen ${TYPE_LABEL[filter]?.toLowerCase()}-innhold.`}
+        <div className={styles.emptyState}>
+          <div className={styles.emptyTitle}>
+            {filter === 'all' ? 'Ingen innhold ennå' : `Ingen ${TYPE_LABEL[filter]?.toLowerCase()}`}
+          </div>
+          <div className={styles.emptyHint}>
+            {filter === 'all'
+              ? 'Klikk «+ Nytt innhold» for å opprette din første lydfil, case eller refleksjon.'
+              : `Klikk «+ Nytt innhold» og velg ${TYPE_LABEL[filter]?.toLowerCase()} for å komme i gang.`}
+          </div>
         </div>
       ) : (
-        <div className={styles.list}>
-          {filtered.map(item => (
-            <ContentRow
-              key={item.id}
-              item={item}
-              onEdit={item => setModal({ mode: 'edit', item })}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <div className={styles.listHeader}>
+            <span className={styles.listHeaderType}>Type</span>
+            <span className={styles.listHeaderTitle}>Tittel</span>
+            <span className={styles.listHeaderWeeks}>Uker</span>
+            <span className={styles.listHeaderActions} />
+          </div>
+          <div className={styles.list}>
+            {filtered.map(item => (
+              <ContentRow
+                key={item.id}
+                item={item}
+                onEdit={item => setModal({ mode: 'edit', item })}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {modal && (
