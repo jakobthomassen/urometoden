@@ -12,6 +12,7 @@ import OnboardingPage from './pages/OnboardingPage'
 import AdminPage from './pages/AdminPage'
 import HelpPage from './pages/HelpPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
+import { useUserProgress } from './hooks/useUserProgress'
 import { isMember } from './utils/membership'
 
 function getInitialDark() {
@@ -33,8 +34,20 @@ export default function App() {
   const [activeWeek, setActiveWeek]             = useState(1)
   const [bibliotekFilter, setBibliotekFilter]   = useState('all')
   const [helpSection, setHelpSection]           = useState('hjelp')
-  const { weeks, refresh: refreshProgress }     = useWeekProgress()
   const memberAccess = isMember(user)
+
+  const {
+    data:          progressData,
+    stats,
+    loaded:        progressLoaded,
+    startWeek:     startWeekDb,
+    devUnlockWeek,
+    updateProgress,
+    updateReflection,
+    refresh:       refreshProgress,
+  } = useUserProgress()
+
+  const { weeks } = useWeekProgress(progressData.weeks)
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -115,10 +128,37 @@ export default function App() {
         onNavigate={navigate}
         memberAccess={memberAccess}
       />
-      {activePage === 'Hjem'      && <DashboardPage weeks={weeks} onNavigateToWeek={navigateToWeek} user={user} />}
+      {activePage === 'Hjem'      && (
+        <DashboardPage
+          weeks={weeks}
+          onNavigateToWeek={navigateToWeek}
+          user={user}
+          stats={stats}
+        />
+      )}
       {activePage === 'Reisen'    && <JourneyPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
-      {activePage === 'Uke'       && <HomePage weekId={activeWeek} onProgressChange={refreshProgress} />}
-      {activePage === 'Bibliotek' && <BibliotekPage initialFilter={bibliotekFilter} />}
+      {activePage === 'Uke'       && (
+        <HomePage
+          weekId={activeWeek}
+          progress={progressData.progress}
+          reflections={progressData.reflections}
+          startWeek={startWeekDb}
+          updateProgress={updateProgress}
+          updateReflection={updateReflection}
+          devUnlockWeek={devUnlockWeek}
+          onProgressChange={refreshProgress}
+          isAdmin={!!user.is_admin}
+        />
+      )}
+      {activePage === 'Bibliotek' && (
+        <BibliotekPage
+          initialFilter={bibliotekFilter}
+          progress={progressData.progress}
+          reflections={progressData.reflections}
+          updateProgress={updateProgress}
+          updateReflection={updateReflection}
+        />
+      )}
       {activePage === 'Hjelp'     && <HelpPage section={helpSection} />}
       {showRightPanel && <RightPanel />}
     </div>

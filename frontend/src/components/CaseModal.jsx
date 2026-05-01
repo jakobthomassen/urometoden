@@ -21,6 +21,7 @@ export default function CaseModal({ item, onClose, onComplete, completed = false
     if (marked) return
     setMarked(true)
     onComplete?.()
+    setTimeout(onClose, 400)
   }
 
   return (

@@ -1,17 +1,31 @@
-import { useState, useCallback } from 'react'
 import { WEEKS } from '../data/weeks'
-import { getWeekStatus, daysUntilUnlock } from '../utils/progress'
+import { getUnlockTime } from '../utils/progress'
 
-function computeWeeks() {
-  return WEEKS.map(w => ({
-    ...w,
-    status:          getWeekStatus(w.id),
-    daysUntilUnlock: daysUntilUnlock(w.id),
-  }))
-}
+export function useWeekProgress(weekDbData = {}) {
+  const weeks = WEEKS.map(w => {
+    const db   = weekDbData[w.id]   ?? {}
+    const prev = weekDbData[w.id - 1] ?? {}
 
-export function useWeekProgress() {
-  const [weeks, setWeeks] = useState(computeWeeks)
-  const refresh = useCallback(() => setWeeks(computeWeeks()), [])
-  return { weeks, refresh }
+    let status
+    if (w.id === 1) {
+      status = db.completed_at ? 'done' : 'active'
+    } else if (!prev.completed_at || !prev.started_at) {
+      status = 'locked'
+    } else if (Date.now() < getUnlockTime(prev.started_at).getTime()) {
+      status = 'locked'
+    } else {
+      status = db.completed_at ? 'done' : 'active'
+    }
+
+    const daysUntilUnlock = w.id > 1 && prev.started_at && prev.completed_at
+      ? (() => {
+          const ms = getUnlockTime(prev.started_at).getTime() - Date.now()
+          return ms <= 0 ? 0 : Math.ceil(ms / 86_400_000)
+        })()
+      : null
+
+    return { ...w, status, daysUntilUnlock }
+  })
+
+  return { weeks }
 }

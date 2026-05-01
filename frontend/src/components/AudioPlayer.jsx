@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from 'react'
 import styles from './AudioPlayer.module.css'
 import FullscreenPlayer from './FullscreenPlayer'
 
+const MIN_LISTEN_FOR_BAR = 60 // seconds
+
 function formatTime(secs) {
   if (!secs || isNaN(secs)) return '0:00'
   const m = Math.floor(secs / 60)
@@ -82,7 +84,10 @@ function FullscreenIcon() {
   )
 }
 
-export default function AudioPlayer({ src, type, title, info, autoFullscreen, onFullscreenClose }) {
+export default function AudioPlayer({
+  src, type, title, info, autoFullscreen, onFullscreenClose,
+  itemId, initialPosition = 0, initialListenSeconds = 0, onSaveProgress,
+}) {
   const audioRef = useRef(null)
   const [playing, setPlaying]         = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -90,29 +95,101 @@ export default function AudioPlayer({ src, type, title, info, autoFullscreen, on
   const [volume, setVolume]           = useState(0.5)
   const [fullscreen, setFullscreen]   = useState(false)
 
-  // Ref so the keydown handler always sees the latest playing value
+  // Progress tracking refs
+  const listenAccRef    = useRef(initialListenSeconds)
+  const playStartRef    = useRef(null)
+  const completedRef    = useRef(false)
+  const lastSaveTimeRef = useRef(Date.now())
+
   const playingRef = useRef(playing)
   useEffect(() => { playingRef.current = playing }, [playing])
 
   useEffect(() => { if (autoFullscreen) setFullscreen(true) }, [])
 
+  // Restore position on metadata load
+  useEffect(() => {
+    const audio = audioRef.current
+    function onLoadedMetadata() {
+      setDuration(audio.duration)
+      if (initialPosition > 0) {
+        audio.currentTime = initialPosition
+        setCurrentTime(initialPosition)
+      }
+    }
+    audio.addEventListener('loadedmetadata', onLoadedMetadata)
+    return () => audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+  }, [initialPosition])
+
+  function accumulateListen() {
+    if (playStartRef.current !== null) {
+      listenAccRef.current += (Date.now() - playStartRef.current) / 1000
+      playStartRef.current = null
+    }
+  }
+
+  function saveProgress(pos, completed = false) {
+    if (!onSaveProgress || !itemId) return
+    const listenSecs = listenAccRef.current + (playStartRef.current !== null ? (Date.now() - playStartRef.current) / 1000 : 0)
+    if (listenSecs >= MIN_LISTEN_FOR_BAR || completed) {
+      onSaveProgress(pos, listenSecs, completed)
+    }
+  }
+
   // Sync playback events
   useEffect(() => {
     const audio = audioRef.current
-    const onTimeUpdate     = () => setCurrentTime(audio.currentTime)
-    const onLoadedMetadata = () => setDuration(audio.duration)
-    const onEnded          = () => setPlaying(false)
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    audio.addEventListener('ended', onEnded)
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-      audio.removeEventListener('ended', onEnded)
-    }
-  }, [])
 
-  // Global keyboard shortcuts — space = play/pause, arrows = ±15 s
+    function onTimeUpdate() {
+      const t = audio.currentTime
+      setCurrentTime(t)
+
+      // Auto-complete at 90%
+      if (!completedRef.current && audio.duration > 0 && t / audio.duration >= 0.9) {
+        completedRef.current = true
+        accumulateListen()
+        saveProgress(t, true)
+      }
+    }
+
+    function onPlay() {
+      playStartRef.current = Date.now()
+    }
+
+    function onPause() {
+      accumulateListen()
+      saveProgress(audio.currentTime)
+    }
+
+    function onEnded() {
+      setPlaying(false)
+      accumulateListen()
+      saveProgress(0) // reset position on completion
+    }
+
+    audio.addEventListener('timeupdate',     onTimeUpdate)
+    audio.addEventListener('play',           onPlay)
+    audio.addEventListener('pause',          onPause)
+    audio.addEventListener('ended',          onEnded)
+    return () => {
+      audio.removeEventListener('timeupdate',     onTimeUpdate)
+      audio.removeEventListener('play',           onPlay)
+      audio.removeEventListener('pause',          onPause)
+      audio.removeEventListener('ended',          onEnded)
+    }
+  }, [onSaveProgress, itemId])
+
+  // 15-second save interval while playing
+  useEffect(() => {
+    if (!onSaveProgress || !itemId) return
+    const interval = setInterval(() => {
+      if (playingRef.current) {
+        saveProgress(audioRef.current?.currentTime ?? 0)
+      }
+    }, 15_000)
+    return () => clearInterval(interval)
+  }, [onSaveProgress, itemId])
+
+  // Global keyboard shortcuts
   useEffect(() => {
     function handleKey(e) {
       const tag = document.activeElement?.tagName
@@ -131,17 +208,18 @@ export default function AudioPlayer({ src, type, title, info, autoFullscreen, on
         e.preventDefault()
         const audio = audioRef.current
         audio.currentTime = Math.max(0, audio.currentTime - 15)
+        saveProgress(audio.currentTime)
       } else if (e.code === 'ArrowRight') {
         e.preventDefault()
         const audio = audioRef.current
         audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15)
+        saveProgress(audio.currentTime)
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
-  // Sync volume to audio element
   useEffect(() => {
     audioRef.current.volume = volume
   }, [volume])
@@ -159,17 +237,29 @@ export default function AudioPlayer({ src, type, title, info, autoFullscreen, on
   function skip(secs) {
     const audio = audioRef.current
     audio.currentTime = Math.max(0, Math.min(duration, audio.currentTime + secs))
+    saveProgress(audio.currentTime)
   }
 
   function handleScrub(e) {
     if (!duration) return
     const rect = e.currentTarget.getBoundingClientRect()
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    audioRef.current.currentTime = pct * duration
+    const newTime = pct * duration
+    audioRef.current.currentTime = newTime
+    saveProgress(newTime)
   }
 
   function scrubTo(time) {
-    audioRef.current.currentTime = Math.max(0, Math.min(duration, time))
+    const newTime = Math.max(0, Math.min(duration, time))
+    audioRef.current.currentTime = newTime
+    saveProgress(newTime)
+  }
+
+  function handleFullscreenClose() {
+    accumulateListen()
+    saveProgress(audioRef.current?.currentTime ?? 0)
+    setFullscreen(false)
+    onFullscreenClose?.()
   }
 
   const progress = duration ? (currentTime / duration) * 100 : 0
@@ -180,7 +270,7 @@ export default function AudioPlayer({ src, type, title, info, autoFullscreen, on
 
       <FullscreenPlayer
         open={fullscreen}
-        onClose={() => { setFullscreen(false); onFullscreenClose?.() }}
+        onClose={handleFullscreenClose}
         title={title}
         info={info}
         type={type}

@@ -10,6 +10,12 @@ export async function onRequestGet({ env, request }) {
   ).bind(payload.sub).first()
   if (!user) return new Response('Unauthorized', { status: 401 })
 
+  const today = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
+  await env.DB.prepare('INSERT OR IGNORE INTO user_login_days (user_id, day) VALUES (?, ?)')
+    .bind(user.id, today).run()
+
   return Response.json(user, {
     headers: { 'Cache-Control': 'private, no-store' },
   })

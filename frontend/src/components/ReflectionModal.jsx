@@ -1,24 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './ReflectionModal.module.css'
 
-const STORAGE_KEY = (id) => `reflection_${id}`
-
-export default function ReflectionModal({ item, onClose }) {
-  const [text, setText] = useState('')
+export default function ReflectionModal({ item, onClose, savedText = '', onSave }) {
+  const [text, setText]   = useState('')
   const [saved, setSaved] = useState(false)
   const textareaRef = useRef(null)
 
-  // Load saved text when item changes
   useEffect(() => {
     if (!item) return
-    setText(localStorage.getItem(STORAGE_KEY(item.id)) ?? '')
+    // Prefer DB text; fall back to localStorage for migration
+    const legacy = localStorage.getItem(`reflection_${item.id}`) ?? ''
+    setText(savedText || legacy)
     setSaved(false)
-    // Focus textarea after transition
     const t = setTimeout(() => textareaRef.current?.focus(), 80)
     return () => clearTimeout(t)
-  }, [item?.id])
+  }, [item?.id, savedText])
 
-  // ESC to close
   useEffect(() => {
     if (!item) return
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -26,8 +23,10 @@ export default function ReflectionModal({ item, onClose }) {
     return () => window.removeEventListener('keydown', handler)
   }, [item, onClose])
 
-  function handleSave() {
-    localStorage.setItem(STORAGE_KEY(item.id), text)
+  async function handleSave() {
+    await onSave?.(text)
+    // Keep localStorage in sync for offline/migration fallback
+    localStorage.setItem(`reflection_${item.id}`, text)
     setSaved(true)
   }
 
