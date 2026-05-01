@@ -1,5 +1,22 @@
 # Changelog
 
+## 01.05.2026
+
+Replaced the "Uro" script-font logo with an inline SVG wordmark in both the user-facing TopNav and the admin header. Background rect removed; paths use `currentColor` so the mark adapts to light and dark mode automatically. Extracted into a shared `UroLogo` component. Admin header alignment changed from `align-items: baseline` to `center` to accommodate the SVG.
+
+Security audit and hardening pass:
+
+- Deleted unauthenticated legacy `/audio/[filename].js` route (no auth, wrong Range handling, public cache, reflected filename in 404). The only caller (`weeks.js`) was updated to use the authenticated `/api/audio/` endpoint.
+- Added `Cache-Control: private, no-store` to `/api/auth/me`.
+- Server-side self-demotion guard on admin user PATCH — API now rejects `is_admin` changes targeting the caller's own account.
+- Session table cleanup on login — expired and revoked rows for the signing-in user are purged before the new session row is inserted.
+- Replaced dynamic column interpolation in content PATCH with a static `FIELD_QUERIES` map; no column names are string-interpolated into SQL.
+- `weekId` URL parameter now validated as a finite integer in range 1–8 before the DB query runs.
+- `user_hint` localStorage cache stripped of `id` and `email`; stores only the fields needed for the optimistic render.
+- `SELECT *` replaced with explicit column lists across `me.js`, `content.js`, `admin/content/index.js`, and `admin/users/[id].js`. Hard `LIMIT 500` cap added to all unbounded content queries.
+
+---
+
 ## 29.04.2026
 
 Implemented session revocation — login now creates a row in a new `sessions` table (migration 005) containing a UUID `sid`, expiry, and `revoked` flag. The `sid` is embedded in the JWT. `getSession` rejects any token whose `sid` is missing or marked revoked. Logout sets `revoked = 1` in the DB before clearing the cookie, so captured tokens are immediately dead. `me.js` now routes through `getSession` instead of raw `verifyJwt`.

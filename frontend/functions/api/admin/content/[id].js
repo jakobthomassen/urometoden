@@ -1,6 +1,13 @@
 import { requireAdmin } from '../../../lib/auth.js'
 
-const EDITABLE = ['title', 'meta', 'r2_key', 'abstract', 'body', 'prompt']
+const FIELD_QUERIES = {
+  title:    'UPDATE content_items SET title    = ? WHERE id = ?',
+  meta:     'UPDATE content_items SET meta     = ? WHERE id = ?',
+  r2_key:   'UPDATE content_items SET r2_key   = ? WHERE id = ?',
+  abstract: 'UPDATE content_items SET abstract = ? WHERE id = ?',
+  body:     'UPDATE content_items SET body     = ? WHERE id = ?',
+  prompt:   'UPDATE content_items SET prompt   = ? WHERE id = ?',
+}
 
 export async function onRequestPatch({ env, request, params }) {
   if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
@@ -8,11 +15,9 @@ export async function onRequestPatch({ env, request, params }) {
   const payload = await request.json()
   const { weeks, ...fields } = payload
 
-  const cols = Object.keys(fields).filter(k => EDITABLE.includes(k))
-  if (cols.length > 0) {
-    const set = cols.map(k => `${k} = ?`).join(', ')
-    await env.DB.prepare(`UPDATE content_items SET ${set} WHERE id = ?`)
-      .bind(...cols.map(k => fields[k]), params.id).run()
+  const cols = Object.keys(fields).filter(k => k in FIELD_QUERIES)
+  for (const col of cols) {
+    await env.DB.prepare(FIELD_QUERIES[col]).bind(fields[col], params.id).run()
   }
 
   if (weeks !== undefined) {

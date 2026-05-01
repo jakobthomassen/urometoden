@@ -2,47 +2,11 @@
 
 ### Security hardening
 
-**Rate limiting on auth endpoints** *(medium)*
-`/api/auth/google` and `/api/auth/callback` are open to abuse. No code change needed — configure via Cloudflare dashboard → Security → Rate Limiting.
-
-**Session revocation** *(done — migration 005)*
-`sessions` table in D1. Login creates a row; logout marks it `revoked = 1`. `getSession` rejects any token whose `sid` is revoked or missing from the table. "Logout all devices" can be implemented by revoking all rows for a `user_id`.
-
-**Path traversal in audio endpoint** *(done — fully mitigated)*
-Catch-all route joins the params array, blocks `..` and leading `/`, and validates the key against an audio extension allowlist (`.mp3 .m4a .aac .ogg .wav .flac`).
-
-**XSS via unsanitized markdown** *(done)*
-`AdminPage.jsx` now passes `marked.parse()` output through `DOMPurify.sanitize()` before rendering.
-
-**Unauthenticated legacy audio route** *(critical)*
-`frontend/functions/audio/[filename].js` (serving `/audio/*`) has no auth check — any unauthenticated request can stream R2 files. Also has incorrect Range handling (passes raw headers object to R2), `Cache-Control: public`, and reflects the filename in 404 responses. The authenticated replacement is `/api/audio/[[filename]].js`. Verify nothing still calls `/audio/` then delete the legacy file.
-
-**`me.js` missing cache guard** *(medium)*
-`/api/auth/me` returns user-specific data (membership, is_admin) with no `Cache-Control` header. Should add `Cache-Control: private, no-store` to prevent any edge caching.
-
-**Admin API missing server-side self-demotion guard** *(medium)*
-`/api/admin/users/[id].js` PATCH has no server-side check preventing an admin from revoking their own `is_admin`. The frontend blocks it, but the raw API does not. Add `if (payload.sub === params.id && 'is_admin' in data)` guard.
-
-**Session table cleanup** *(medium)*
-Expired and revoked `sessions` rows accumulate indefinitely. No cleanup mechanism exists. Options: delete expired rows on every login (low-cost), or a scheduled Cloudflare Cron Trigger running `DELETE FROM sessions WHERE expires_at < ?`.
-
-**Dynamic column interpolation in content PATCH** *(low)*
-`admin/content/[id].js` builds `SET col = ?` clauses by interpolating whitelisted column names directly into SQL. The EDITABLE array prevents injection today, but this pattern is fragile — a future typo or bad merge could expose it. Replace with explicit per-field prepared statements.
-
-**`weekId` not validated as finite integer** *(low)*
-`/api/weeks/[weekId]/content.js` uses `parseInt(params.weekId)` without checking for `NaN`. Should add `if (!Number.isFinite(weekId) || weekId < 1 || weekId > 8)` guard.
-
-**`user_hint` localStorage caches sensitive fields** *(low)*
-`App.jsx` stores `{ id, email, name, is_admin, membership }` in localStorage as a render hint. If XSS ever runs, that cache is readable. Consider storing only the non-sensitive display hint (name, membership tier) and re-fetching `is_admin` and `membership_expires_at` from the live response only.
-
-**`SELECT *` in hot paths** *(low — performance)*
-`me.js` and `admin/content/index.js` use `SELECT *`. Explicit column lists reduce bytes parsed per row and protect against accidentally exposing future columns.
-
-**No pagination on content endpoints** *(low — performance)*
-`/api/content` and `/api/admin/content` fetch all rows with no `LIMIT`. Fine at current scale, but should add pagination or at minimum a hard cap (`LIMIT 500`) before the library grows large.
+**Rate limiting on auth endpoints** *(medium — Cloudflare dashboard)*
+`/api/auth/google` and `/api/auth/callback` are open to abuse. Configure via Cloudflare dashboard → Security → Rate Limiting. No code change needed.
 
 **GDPR Article 9 — reflection text** *(compliance)*
-Reflection text (personal emotional/mental-health data) likely qualifies as special-category data. Requires explicit consent and a documented legal basis before launch. Flag to whoever drafts the privacy policy.
+Reflection text (personal emotional/mental-health data) likely qualifies as special-category data under GDPR. Requires explicit consent and a documented legal basis before launch. Flag to whoever drafts the privacy policy.
 
 ---
 

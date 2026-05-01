@@ -6,8 +6,8 @@ export async function onRequestGet({ env, request }) {
   if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
 
   const [{ results: items }, { results: weekRows }] = await Promise.all([
-    env.DB.prepare('SELECT * FROM content_items ORDER BY type, title').all(),
-    env.DB.prepare('SELECT * FROM week_content ORDER BY week_id, position').all(),
+    env.DB.prepare('SELECT id, type, title, meta, r2_key, abstract, body, prompt FROM content_items ORDER BY type, title LIMIT 500').all(),
+    env.DB.prepare('SELECT content_id, week_id, position FROM week_content ORDER BY week_id, position').all(),
   ])
 
   const weeksByItem = {}
