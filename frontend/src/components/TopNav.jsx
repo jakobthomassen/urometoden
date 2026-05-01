@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import styles from './TopNav.module.css'
+import UroLogo from './UroLogo'
 
 const NAV_TABS = [
   { label: 'Hjem',      active: true  },
@@ -145,7 +146,9 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, 
 
   return (
     <nav className={styles.topnav}>
-      <button className={styles.logo} onClick={() => onNavigate('Hjem')}>Uro</button>
+      <button className={styles.logo} onClick={() => onNavigate('Hjem')} aria-label="Hjem">
+        <UroLogo className={styles.logoSvg} />
+      </button>
 
       <div className={styles.navLinks}>
         {NAV_TABS.map(tab => {
