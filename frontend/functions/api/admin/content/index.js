@@ -7,13 +7,13 @@ export async function onRequestGet({ env, request }) {
 
   const [{ results: items }, { results: weekRows }] = await Promise.all([
     env.DB.prepare('SELECT id, type, title, meta, r2_key, abstract, body, prompt FROM content_items ORDER BY type, title LIMIT 500').all(),
-    env.DB.prepare('SELECT content_id, week_id, position FROM week_content ORDER BY week_id, position').all(),
+    env.DB.prepare('SELECT content_id, week_id, position, is_default FROM week_content ORDER BY week_id, position').all(),
   ])
 
   const weeksByItem = {}
   for (const w of weekRows) {
     if (!weeksByItem[w.content_id]) weeksByItem[w.content_id] = []
-    weeksByItem[w.content_id].push({ week_id: w.week_id, position: w.position })
+    weeksByItem[w.content_id].push({ week_id: w.week_id, position: w.position, is_default: w.is_default ?? 0 })
   }
 
   return Response.json(items.map(item => ({ ...item, weeks: weeksByItem[item.id] || [] })))
@@ -39,9 +39,13 @@ export async function onRequestPost({ env, request }) {
   const assignedWeeks = []
   if (weeks?.length) {
     for (const w of weeks) {
-      await env.DB.prepare('INSERT INTO week_content (week_id, content_id, position) VALUES (?, ?, ?)')
-        .bind(w.week_id, id.trim(), w.position ?? 0).run()
-      assignedWeeks.push(w)
+      const isDefault = w.is_default ? 1 : 0
+      if (isDefault) {
+        await env.DB.prepare('UPDATE week_content SET is_default = 0 WHERE week_id = ?').bind(w.week_id).run()
+      }
+      await env.DB.prepare('INSERT INTO week_content (week_id, content_id, position, is_default) VALUES (?, ?, ?, ?)')
+        .bind(w.week_id, id.trim(), w.position ?? 0, isDefault).run()
+      assignedWeeks.push({ ...w, is_default: isDefault })
     }
   }
 

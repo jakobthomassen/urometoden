@@ -614,6 +614,33 @@
   text-align: center;
 }
 
+.weekChipDefaultBtn {
+  padding: 5px 7px;
+  font-size: 11px;
+  border: none;
+  border-left: 0.5px solid var(--accent);
+  background: var(--accent-bg);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color 0.12s;
+  line-height: 1;
+}
+.weekChipDefaultBtn:hover { color: var(--text-2); }
+
+.weekChipDefaultOn { color: var(--amber, #c4a46b) !important; }
+
+.weekChipDefault {
+  border-color: var(--amber, #c4a46b);
+  background: color-mix(in srgb, var(--amber, #c4a46b) 10%, transparent);
+}
+.weekChipDefault .weekChipBtn { color: var(--amber, #c4a46b); }
+
+.weekTagDefault {
+  color: var(--amber, #c4a46b);
+  border-color: var(--amber, #c4a46b);
+  background: color-mix(in srgb, var(--amber, #c4a46b) 10%, transparent);
+}
+
 /* ─── File picker overlay ─────────────────────────────────── */
 
 .pickerOverlay {

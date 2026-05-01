@@ -133,7 +133,6 @@ export default function App() {
           weeks={weeks}
           onNavigateToWeek={navigateToWeek}
           user={user}
-          stats={stats}
         />
       )}
       {activePage === 'Reisen'    && <JourneyPage weeks={weeks} onNavigateToWeek={navigateToWeek} />}
@@ -160,7 +159,7 @@ export default function App() {
         />
       )}
       {activePage === 'Hjelp'     && <HelpPage section={helpSection} />}
-      {showRightPanel && <RightPanel />}
+      {showRightPanel && <RightPanel stats={stats} weeks={weeks} />}
     </div>
   )
 }

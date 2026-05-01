@@ -18,16 +18,19 @@ function parseDurationMeta(meta) {
 
 export default function ContentCard({
   type, label, title, meta, abstract, weeks, onClick, completed = false,
-  listenSeconds = 0, positionSeconds = 0,
+  listenSeconds = 0, positionSeconds = 0, isPlaying = false,
 }) {
-  const showBar = (type === 'audio' || type === 'video') && listenSeconds >= 60
+  const showBar = (type === 'audio' || type === 'video') && listenSeconds >= 60 && !completed
   const duration = parseDurationMeta(meta)
   const barPct   = showBar && duration > 0
     ? Math.min(100, (positionSeconds / duration) * 100)
     : 0
 
   return (
-    <div className={`${styles.card} ${completed ? styles.completed : ''}`} onClick={onClick}>
+    <div
+      className={`${styles.card} ${completed ? styles.completed : ''} ${isPlaying ? styles.playing : ''}`}
+      onClick={onClick}
+    >
       <div className={`${styles.tag} ${typeClass[type] || ''}`}>{label}</div>
       <div className={styles.title}>{title}</div>
       {abstract && <div className={styles.descriptor}>{abstract}</div>}

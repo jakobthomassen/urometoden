@@ -1,9 +1,18 @@
+@keyframes playerGlow {
+  0%   { box-shadow: var(--shadow), 0 0 0 2px var(--accent), 0 0 16px 4px color-mix(in srgb, var(--accent) 30%, transparent); }
+  100% { box-shadow: var(--shadow), 0 0 0 0px transparent, 0 0 0 0px transparent; }
+}
+
 .card {
   background: var(--surface);
   border: 0.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 22px 24px;
   box-shadow: var(--shadow);
+}
+
+.glow {
+  animation: playerGlow 1s ease-out forwards;
 }
 
 .top {

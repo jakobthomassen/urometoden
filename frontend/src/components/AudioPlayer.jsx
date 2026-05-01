@@ -87,6 +87,7 @@ function FullscreenIcon() {
 export default function AudioPlayer({
   src, type, title, info, autoFullscreen, onFullscreenClose,
   itemId, initialPosition = 0, initialListenSeconds = 0, onSaveProgress,
+  glowKey,
 }) {
   const audioRef = useRef(null)
   const [playing, setPlaying]         = useState(false)
@@ -94,31 +95,48 @@ export default function AudioPlayer({
   const [duration, setDuration]       = useState(0)
   const [volume, setVolume]           = useState(0.5)
   const [fullscreen, setFullscreen]   = useState(false)
+  const [glowing, setGlowing]         = useState(false)
 
   // Progress tracking refs
   const listenAccRef    = useRef(initialListenSeconds)
   const playStartRef    = useRef(null)
   const completedRef    = useRef(false)
-  const lastSaveTimeRef = useRef(Date.now())
+  // Use a ref so loadedmetadata closure always sees the latest value
+  const initialPositionRef = useRef(initialPosition)
+  useEffect(() => { initialPositionRef.current = initialPosition }, [initialPosition])
 
   const playingRef = useRef(playing)
   useEffect(() => { playingRef.current = playing }, [playing])
 
   useEffect(() => { if (autoFullscreen) setFullscreen(true) }, [])
 
-  // Restore position on metadata load
+  // Glow animation when glowKey changes
+  useEffect(() => {
+    if (glowKey === undefined) return
+    setGlowing(false)
+    const frame = requestAnimationFrame(() => setGlowing(true))
+    return () => cancelAnimationFrame(frame)
+  }, [glowKey])
+
+  // Restore position on metadata load (or immediately if already loaded)
   useEffect(() => {
     const audio = audioRef.current
-    function onLoadedMetadata() {
-      setDuration(audio.duration)
-      if (initialPosition > 0) {
-        audio.currentTime = initialPosition
-        setCurrentTime(initialPosition)
+    function trySeek() {
+      const pos = initialPositionRef.current
+      if (pos > 0) {
+        audio.currentTime = pos
+        setCurrentTime(pos)
       }
     }
+    function onLoadedMetadata() {
+      setDuration(audio.duration)
+      trySeek()
+    }
+    // If metadata already available (e.g. cached), seek right away
+    if (audio.readyState >= 1) trySeek()
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
     return () => audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-  }, [initialPosition])
+  }, [])
 
   function accumulateListen() {
     if (playStartRef.current !== null) {
@@ -265,7 +283,10 @@ export default function AudioPlayer({
   const progress = duration ? (currentTime / duration) * 100 : 0
 
   return (
-    <div className={styles.card}>
+    <div
+      className={`${styles.card} ${glowing ? styles.glow : ''}`}
+      onAnimationEnd={() => setGlowing(false)}
+    >
       <audio ref={audioRef} src={src} preload="metadata" />
 
       <FullscreenPlayer

@@ -1,0 +1,1 @@
+ALTER TABLE week_content ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0;
