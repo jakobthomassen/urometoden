@@ -3,6 +3,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import styles from './AdminPage.module.css'
 import AdminContentTab from './AdminContentTab'
+import UroLogo from '../components/UroLogo'
 // DEV ONLY — remove before prod: bundles markdown files into the client build
 import changelogRaw from '../../../CHANGELOG.md?raw'
 import todoRaw      from '../../../TODO.md?raw'
@@ -287,7 +288,9 @@ export default function AdminPage({ user, onLogout }) {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <a className={styles.logo} href="/" title="Tilbake til appen">Uro</a>
+          <a className={styles.logo} href="/" title="Tilbake til appen" aria-label="Uro — tilbake til appen">
+            <UroLogo className={styles.logoSvg} />
+          </a>
           <span className={styles.adminLabel}>Admin</span>
         </div>
         <div className={styles.headerRight}>

@@ -18,18 +18,24 @@
 
 .headerLeft {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
 .logo {
-  font-family: var(--font-script);
-  font-size: 22px;
   color: var(--text);
   text-decoration: none;
+  display: flex;
+  align-items: center;
   transition: opacity 0.14s;
 }
 .logo:hover { opacity: 0.65; }
+
+.logoSvg {
+  height: 22px;
+  width: auto;
+  display: block;
+}
 
 .adminLabel {
   font-size: 11px;
