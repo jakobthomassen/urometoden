@@ -77,3 +77,18 @@
   padding: 1px 5px;
   line-height: 1.5;
 }
+
+.progressTrack {
+  height: 2px;
+  background: var(--surface2);
+  border-radius: 1px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}

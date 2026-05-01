@@ -1,5 +1,31 @@
 # Changelog
 
+## 01.05.2026 (continued)
+
+User progression migrated to D1 (migration 006). Five new tables: `user_progress` (per-item completion, `position_seconds` resume point, `listen_seconds` cumulative), `user_reflections` (reflection text), `user_week_progress` (week start + completion timestamps), `user_state` (active week), `user_login_days` (one row per Oslo date for streak).
+
+New API endpoints under `/api/me/`:
+- `GET /api/me/progress` — full progress snapshot (progress map, reflections map, weeks map, active week)
+- `PATCH /api/me/progress/[itemId]` — upsert position/listen/completed; auto-detects week completion server-side
+- `PATCH /api/me/reflections/[itemId]` — saves reflection text, marks item complete, checks week completion
+- `POST /api/me/weeks/[weekId]/start` — sets week `started_at` if not set, updates active week; `?unlock=dev` (admin only) back-dates `started_at` to 6 days ago for instant unlock
+- `GET /api/me/stats` — streak, total listen seconds, weeks completed
+
+`GET /api/auth/me` now inserts a `user_login_days` row on every request (INSERT OR IGNORE) for streak tracking.
+
+Frontend:
+- New `useUserProgress` hook centralises all DB progress state — fetches progress + stats on mount, exposes `startWeek`, `devUnlockWeek`, `updateProgress`, `updateReflection`.
+- `useWeekProgress` rewritten to derive week statuses from DB `started_at`/`completed_at` data instead of localStorage. Week unlock logic (5-day gate, Oslo 10:00) preserved.
+- `App.jsx` wires both hooks; progress props threaded to `HomePage`, `BibliotekPage`, `DashboardPage`.
+- `AudioPlayer` tracks listen time (accumulated only while playing), saves to DB every 15 s and on pause/seek/close. Restores `position_seconds` on load. Auto-completes item at 90% listened. Progress bar threshold: 60 s minimum listen before bar appears.
+- `ContentCard` gains `listenSeconds` + `positionSeconds` props; renders a 2px progress bar for audio/video when `listenSeconds ≥ 60`.
+- `ReflectionModal` — `onSave(text)` callback replaces direct localStorage write; falls back to localStorage for existing data (migration on first save).
+- `CaseModal` — auto-closes 400 ms after "Lest" is clicked.
+- Dashboard `MemberDashboard` gains a 4-card stat grid: lyttetid, dager på rad (🔥 at 3+), uker fullført, placeholder.
+- Dev unlock button in `HomePage` now requires `isAdmin` (was visible to all users).
+
+---
+
 ## 01.05.2026
 
 Replaced the "Uro" script-font logo with an inline SVG wordmark in both the user-facing TopNav and the admin header. Background rect removed; paths use `currentColor` so the mark adapts to light and dark mode automatically. Extracted into a shared `UroLogo` component. Admin header alignment changed from `align-items: baseline` to `center` to accommodate the SVG.

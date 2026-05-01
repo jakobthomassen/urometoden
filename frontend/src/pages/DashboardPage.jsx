@@ -13,6 +13,14 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function formatListenTime(secs) {
+  if (secs < 60)   return '< 1 min'
+  if (secs < 3600) return `${Math.floor(secs / 60)} min`
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  return m > 0 ? `${h}t ${m}m` : `${h}t`
+}
+
 function useDailyTip() {
   const [tip, setTip] = useState(() => {
     try {
@@ -44,7 +52,6 @@ const BENEFITS = [
   { icon: '▷', label: 'Videoer',            sub: 'Korte forklaringsvideoer' },
 ]
 
-// SHOW_TRIAL: hardcoded true — will be controlled by a DB flag later
 const SHOW_TRIAL = true
 
 function NonMemberDashboard({ tip }) {
@@ -92,7 +99,33 @@ function NonMemberDashboard({ tip }) {
   )
 }
 
-function MemberDashboard({ weeks, onNavigateToWeek, tip }) {
+function StatGrid({ stats }) {
+  const { streak = 0, total_listen_seconds = 0, weeks_completed = 0 } = stats ?? {}
+  const streakLabel = streak >= 3 ? `${streak} 🔥` : `${streak}`
+
+  return (
+    <div className={styles.statGrid}>
+      <div className={styles.statCard}>
+        <div className={styles.statValue}>{formatListenTime(total_listen_seconds)}</div>
+        <div className={styles.statLabel}>Lyttetid</div>
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statValue}>{streakLabel}</div>
+        <div className={styles.statLabel}>Dager på rad</div>
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statValue}>{weeks_completed} / 8</div>
+        <div className={styles.statLabel}>Uker fullført</div>
+      </div>
+      <div className={styles.statCard}>
+        <div className={styles.statValue}>—</div>
+        <div className={styles.statLabel}>Kommer snart</div>
+      </div>
+    </div>
+  )
+}
+
+function MemberDashboard({ weeks, onNavigateToWeek, tip, stats }) {
   const activeWeek = weeks.find(w => w.status === 'active') ?? weeks[0] ?? { id: 1, title: '…' }
   const doneCount  = weeks.filter(w => w.status === 'done').length
   const progress   = (doneCount / 8) * 100
@@ -127,6 +160,8 @@ function MemberDashboard({ weeks, onNavigateToWeek, tip }) {
         </div>
       </div>
 
+      <StatGrid stats={stats} />
+
       <div className={styles.tipCard}>
         <div className={styles.tipLabel}>Dagens tanke</div>
         <p className={styles.tipText}>{tip ?? '…'}</p>
@@ -135,15 +170,15 @@ function MemberDashboard({ weeks, onNavigateToWeek, tip }) {
   )
 }
 
-export default function DashboardPage({ weeks = [], onNavigateToWeek, user }) {
-  const tip         = useDailyTip()
+export default function DashboardPage({ weeks = [], onNavigateToWeek, user, stats }) {
+  const tip          = useDailyTip()
   const memberAccess = isMember(user)
 
   return (
     <main className={styles.main}>
       <div className={styles.greeting}>{getGreeting()}</div>
       {memberAccess
-        ? <MemberDashboard weeks={weeks} onNavigateToWeek={onNavigateToWeek} tip={tip} />
+        ? <MemberDashboard weeks={weeks} onNavigateToWeek={onNavigateToWeek} tip={tip} stats={stats} />
         : <NonMemberDashboard tip={tip} />
       }
     </main>

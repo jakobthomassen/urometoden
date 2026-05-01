@@ -25,51 +25,25 @@ A user may sign up on web with Google, then sign up on the app with Apple — cr
 1. User initiates "Connect Google" while logged in with Apple (or vice versa)
 2. OAuth completes — look up the email in `users` to find the existing account
 3. Reassign the incoming `identities` row to the existing `user_id`
-4. Migrate all data from the orphaned `user_id` — `user_progress`, `user_reflections`, `sessions`
+4. Migrate all data from the orphaned `user_id` — `user_progress`, `user_reflections`, `user_week_progress`, `user_state`, `user_login_days`, `sessions`
 5. Delete the orphaned `users` row
 
 Merge conflicts need a defined strategy — e.g. if both accounts have progress on week 1, keep the most recent `completed_at`. Define this before implementing. Surface "Connected accounts" in the profile page.
 
 ---
 
-### User progress — DB migration
+### User progress
 
-Move all progress tracking from localStorage to D1. localStorage is per-device and lost on clear; DB-backed progress follows the user across devices.
+Migration 006 complete. Progress, reflections, week state, and login streak are all DB-backed. See CHANGELOG for full details.
 
-**What needs migrating:**
+**Optional content items** *(post-launch polish)*
+Add an `optional` boolean column to `content_items`. Optional items (e.g. written reflections) are excluded from the week-completion check — a week is considered done when all non-optional items have `completed_at` set. The admin Innhold form should expose a toggle for this flag. Content cards for optional items should carry a visual indicator (e.g. a muted "Valgfri" label) so users know they can skip without blocking progress.
 
-- Week start timestamps (currently `week_progress` in localStorage)
-- Completed item IDs per week
-- Reflection text per item
+**Account deletion cascade** *(GDPR — must update before launch)*
+The `DELETE FROM users` cascade must also cover the new tables added in migration 006: `user_progress`, `user_reflections`, `user_week_progress`, `user_state`, `user_login_days`. Add these to the account deletion flow once it is implemented.
 
-**Revise the definition of "completed":**
-
-- Currently: any click on a card marks it complete.
-- Consider: explicit "Merk som fullført" button, minimum listening time for audio, or a combination.
-- Decision needed before migration — the schema should reflect the final completion model.
-
-**Schema additions (draft):**
-
-```sql
-CREATE TABLE user_progress (
-  user_id        INTEGER NOT NULL REFERENCES users(id),
-  week_id        INTEGER NOT NULL,
-  item_id        TEXT    NOT NULL REFERENCES content_items(id),
-  completed_at   INTEGER,
-  listen_seconds INTEGER,
-  PRIMARY KEY (user_id, week_id, item_id)
-);
-
-CREATE TABLE user_reflections (
-  user_id    INTEGER NOT NULL REFERENCES users(id),
-  item_id    TEXT    NOT NULL REFERENCES content_items(id),
-  body       TEXT,
-  updated_at INTEGER,
-  PRIMARY KEY (user_id, item_id)
-);
-```
-
-**Benched until:** completion model is decided.
+**Stat grid — 4th card** *(placeholder)*
+The 4th stat card currently shows "—" and "Kommer snart". Define what it tracks before launch.
 
 ---
 
@@ -78,7 +52,7 @@ CREATE TABLE user_reflections (
 First draft is live. Remaining:
 
 - **Access rules enforcement**: which weeks/content are free vs. member-only? What does a non-member see — locked cards, a paywall prompt?
-- **Dev unlock button**: hide for non-admin users
+- **Dev unlock button**: now hidden from non-admin users ✓ — but still shown to admins outside of production. Remove or gate behind an env flag before launch.
 
 ---
 
@@ -116,7 +90,7 @@ Personvern and Hjelp og støtte are now wired. Still pending:
 Norway follows GDPR via the Personal Data Act (_Personopplysningsloven_). The app stores name, email, Google ID, progress, and reflection text — all personal data under GDPR.
 
 **Account deletion (Article 17 — right to erasure)**
-Users must be able to delete their account and all associated data. Hard-delete rows across `users`, `identities`, `user_progress`, `user_reflections`, and `sessions`. Add a delete account flow in the profile/settings page with a confirmation step.
+Users must be able to delete their account and all associated data. Hard-delete rows across `users`, `identities`, `sessions`, `user_progress`, `user_reflections`, `user_week_progress`, `user_state`, `user_login_days`. Add a delete account flow in the profile/settings page with a confirmation step.
 
 **Data export (Article 20 — right to portability)**
 Implement `GET /api/account/export` — returns a JSON file of all data tied to the user.
