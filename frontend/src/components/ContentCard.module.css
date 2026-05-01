@@ -12,6 +12,12 @@
   border-color: var(--accent);
 }
 
+.playing {
+  opacity: 0.5;
+  pointer-events: none;
+  transform: none !important;
+}
+
 .check {
   position: absolute;
   top: 8px;

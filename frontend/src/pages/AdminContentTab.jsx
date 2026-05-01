@@ -89,14 +89,17 @@ function TypeSelector({ onSelect }) {
 
 // ─── WeekPicker ─────────────────────────────────────────────────────────────
 
-function WeekPicker({ value = [], onChange }) {
+function WeekPicker({ value = [], onChange, showDefault = false }) {
   function toggle(n) {
     const has = value.find(w => w.week_id === n)
     if (has) onChange(value.filter(w => w.week_id !== n))
-    else     onChange([...value, { week_id: n, position: 0 }].sort((a, b) => a.week_id - b.week_id))
+    else     onChange([...value, { week_id: n, position: 0, is_default: 0 }].sort((a, b) => a.week_id - b.week_id))
   }
   function setPos(n, pos) {
     onChange(value.map(w => w.week_id === n ? { ...w, position: parseInt(pos) || 0 } : w))
+  }
+  function toggleDefault(n) {
+    onChange(value.map(w => w.week_id === n ? { ...w, is_default: w.is_default ? 0 : 1 } : w))
   }
 
   return (
@@ -104,7 +107,7 @@ function WeekPicker({ value = [], onChange }) {
       {Array.from({ length: 8 }, (_, i) => i + 1).map(n => {
         const active = value.find(w => w.week_id === n)
         return (
-          <div key={n} className={`${styles.weekChip} ${active ? styles.weekChipActive : ''}`}>
+          <div key={n} className={`${styles.weekChip} ${active ? styles.weekChipActive : ''} ${active?.is_default ? styles.weekChipDefault : ''}`}>
             <button type="button" className={styles.weekChipBtn} onClick={() => toggle(n)}>
               {active ? '✓ ' : ''}Uke {n}
             </button>
@@ -117,6 +120,16 @@ function WeekPicker({ value = [], onChange }) {
                 onChange={e => setPos(n, e.target.value)}
                 title="Posisjon i uke"
               />
+            )}
+            {active && showDefault && (
+              <button
+                type="button"
+                className={`${styles.weekChipDefaultBtn} ${active.is_default ? styles.weekChipDefaultOn : ''}`}
+                onClick={() => toggleDefault(n)}
+                title={active.is_default ? 'Standard for denne uken — klikk for å fjerne' : 'Sett som standard for denne uken'}
+              >
+                ★
+              </button>
             )}
           </div>
         )
@@ -334,7 +347,7 @@ function ContentForm({ initial, onSave, onCancel, saving, error }) {
             Velg hvilke uker dette innholdet skal vises i.
             Posisjonsnummeret bestemmer rekkefølgen innenfor uken (lavere tall = vises først).
           </span>
-          <WeekPicker value={form.weeks} onChange={w => set('weeks', w)} />
+          <WeekPicker value={form.weeks} onChange={w => set('weeks', w)} showDefault={needsFile} />
         </div>
 
         {error && <div className={styles.formError}>{error}</div>}
@@ -460,7 +473,9 @@ function ContentRow({ item, onEdit, onDelete }) {
       </div>
       <div className={styles.rowWeeks}>
         {item.weeks?.sort((a, b) => a.week_id - b.week_id).map(w => (
-          <span key={w.week_id} className={styles.weekTag}>Uke {w.week_id}</span>
+          <span key={w.week_id} className={`${styles.weekTag} ${w.is_default ? styles.weekTagDefault : ''}`}>
+            {w.is_default ? '★ ' : ''}Uke {w.week_id}
+          </span>
         ))}
         {item.weeks?.length === 0 && <span className={styles.rowNoWeek}>Ikke tilordnet</span>}
       </div>

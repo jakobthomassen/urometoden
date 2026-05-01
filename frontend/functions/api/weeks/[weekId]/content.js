@@ -10,7 +10,7 @@ export async function onRequest({ params, env, request }) {
   }
 
   const { results } = await env.DB.prepare(`
-    SELECT ci.*, COALESCE(wc.meta, ci.meta) AS meta
+    SELECT ci.*, COALESCE(wc.meta, ci.meta) AS meta, wc.is_default
     FROM content_items ci
     JOIN week_content wc ON ci.id = wc.content_id
     WHERE wc.week_id = ?

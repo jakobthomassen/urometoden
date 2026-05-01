@@ -3,12 +3,13 @@ import StatCard from './StatCard'
 import TestimonyCard from './TestimonyCard'
 import CourseCard from './CourseCard'
 
-const STATS = [
-  { value: '0',   label: 'Lydfiler lyttet' },
-  { value: '0t',  label: 'Total lyttetid' },
-  { value: '1',   label: 'Dager i strekk' },
-  { value: '0/8', label: 'Uker fullført' },
-]
+function fmtListenTime(secs = 0) {
+  if (secs < 60)   return '0m'
+  if (secs < 3600) return `${Math.floor(secs / 60)}m`
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
+  return m > 0 ? `${h}t ${m}m` : `${h}t`
+}
 
 const TESTIMONIALS = [
   {
@@ -27,7 +28,19 @@ const COURSES = [
   { emoji: '✦',  name: 'Uroskolen live',           meta: 'Neste sesjon: 28. april',             thumbColor: 'green' },
 ]
 
-export default function RightPanel() {
+export default function RightPanel({ stats = {}, weeks = [] }) {
+  const { streak = 0, total_listen_seconds = 0, weeks_completed = 0 } = stats
+  const streakDisplay = streak >= 3 ? `${streak} 🔥` : `${streak}`
+
+  const nextWeek = weeks.find(w => w.status === 'locked')
+
+  const STATS = [
+    { value: fmtListenTime(total_listen_seconds), label: 'Total lyttetid' },
+    { value: streakDisplay,                        label: 'Dager i strekk' },
+    { value: `${weeks_completed}/8`,               label: 'Uker fullført'  },
+    { value: '—',                                  label: 'Kommer snart'   },
+  ]
+
   return (
     <aside className={styles.panel}>
 
@@ -38,16 +51,18 @@ export default function RightPanel() {
         </div>
       </section>
 
-      <section>
-        <div className={styles.sectionTitle}>Neste uke</div>
-        <div className={styles.upcomingCard}>
-          <div className={styles.upcomingBadge}>2</div>
-          <div>
-            <div className={styles.upcomingLabel}>Låses opp etter denne uken</div>
-            <div className={styles.upcomingTitle}>Reaktivitet</div>
+      {nextWeek && (
+        <section>
+          <div className={styles.sectionTitle}>Neste uke</div>
+          <div className={styles.upcomingCard}>
+            <div className={styles.upcomingBadge}>{nextWeek.id}</div>
+            <div>
+              <div className={styles.upcomingLabel}>Låses opp etter denne uken</div>
+              <div className={styles.upcomingTitle}>{nextWeek.title}</div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section>
         <div className={styles.sectionTitle}>Deltakere forteller</div>

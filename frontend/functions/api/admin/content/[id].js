@@ -23,8 +23,13 @@ export async function onRequestPatch({ env, request, params }) {
   if (weeks !== undefined) {
     await env.DB.prepare('DELETE FROM week_content WHERE content_id = ?').bind(params.id).run()
     for (const w of weeks) {
-      await env.DB.prepare('INSERT INTO week_content (week_id, content_id, position) VALUES (?, ?, ?)')
-        .bind(w.week_id, params.id, w.position ?? 0).run()
+      const isDefault = w.is_default ? 1 : 0
+      if (isDefault) {
+        // Clear any existing default for this week before setting a new one
+        await env.DB.prepare('UPDATE week_content SET is_default = 0 WHERE week_id = ?').bind(w.week_id).run()
+      }
+      await env.DB.prepare('INSERT INTO week_content (week_id, content_id, position, is_default) VALUES (?, ?, ?, ?)')
+        .bind(w.week_id, params.id, w.position ?? 0, isDefault).run()
     }
   }
 
@@ -32,7 +37,7 @@ export async function onRequestPatch({ env, request, params }) {
   if (!item) return new Response('Not found', { status: 404 })
 
   const { results: assignedWeeks } = await env.DB.prepare(
-    'SELECT week_id, position FROM week_content WHERE content_id = ? ORDER BY week_id'
+    'SELECT week_id, position, is_default FROM week_content WHERE content_id = ? ORDER BY week_id'
   ).bind(params.id).all()
 
   return Response.json({ ...item, weeks: assignedWeeks })

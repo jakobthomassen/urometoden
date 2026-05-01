@@ -21,18 +21,33 @@ export default function HomePage({
   const [loading, setLoading]                   = useState(true)
   const [activeReflection, setActiveReflection] = useState(null)
   const [activeCase, setActiveCase]             = useState(null)
+  const [playingItem, setPlayingItem]           = useState(null)
+  const [glowKey, setGlowKey]                   = useState(0)
 
   useEffect(() => {
     startWeek?.(weekId)
+    setPlayingItem(null)
   }, [weekId])
 
   useEffect(() => {
     setLoading(true)
     fetch(`/api/weeks/${weekId}/content`, { cache: 'no-store' })
       .then(r => r.json())
-      .then(items => setContent(items))
+      .then(items => {
+        setContent(items)
+        const def = items.find(i => i.is_default && (i.type === 'audio' || i.type === 'video'))
+        if (def) {
+          setPlayingItem(def)
+          setGlowKey(k => k + 1)
+        }
+      })
       .finally(() => setLoading(false))
   }, [weekId])
+
+  function handleAudioClick(item) {
+    setPlayingItem(item)
+    setGlowKey(k => k + 1)
+  }
 
   async function markComplete(itemId) {
     await updateProgress?.(itemId, { completed: true })
@@ -49,9 +64,8 @@ export default function HomePage({
     onProgressChange?.()
   }
 
-  const completedIds = content.map(i => i.id).filter(id => !!progress[id]?.completed_at)
-  const allComplete  = content.length > 0 && content.every(i => !!progress[i.id]?.completed_at)
-  const hasNextWeek  = weekId < 8
+  const allComplete = content.length > 0 && content.every(i => !!progress[i.id]?.completed_at)
+  const hasNextWeek = weekId < 8
 
   return (
     <main className={styles.main}>
@@ -75,12 +89,23 @@ export default function HomePage({
         <p className={styles.subtitle}>{weekMeta.description}</p>
       </div>
 
-      {week1Data && (
+      {playingItem && (
         <AudioPlayer
-          src={week1Data.audio.src}
-          type={week1Data.audio.type}
-          title={week1Data.audio.title}
-          info={week1Data.audio.info}
+          src={`/api/audio/${playingItem.r2_key}`}
+          type="Lyd"
+          title={playingItem.title}
+          info={playingItem.abstract}
+          itemId={playingItem.id}
+          initialPosition={progress[playingItem.id]?.position_seconds ?? 0}
+          initialListenSeconds={progress[playingItem.id]?.listen_seconds ?? 0}
+          onSaveProgress={(pos, listenSecs, completed) =>
+            updateProgress?.(playingItem.id, {
+              position_seconds: pos,
+              listen_seconds:   listenSecs,
+              ...(completed ? { completed } : {}),
+            })
+          }
+          glowKey={glowKey}
         />
       )}
 
@@ -92,6 +117,8 @@ export default function HomePage({
           <div className={styles.contentGrid}>
             {content.map(item => {
               const itemProgress = progress[item.id]
+              const isAudioOrVideo = item.type === 'audio' || item.type === 'video'
+              const isCurrentlyPlaying = playingItem?.id === item.id
               return (
                 <ContentCard
                   key={item.id}
@@ -102,13 +129,14 @@ export default function HomePage({
                   completed={!!itemProgress?.completed_at}
                   listenSeconds={itemProgress?.listen_seconds ?? 0}
                   positionSeconds={itemProgress?.position_seconds ?? 0}
+                  isPlaying={isCurrentlyPlaying}
                   onClick={() => {
                     if (item.type === 'reflect') {
                       setActiveReflection(item)
                     } else if (item.type === 'case') {
                       setActiveCase(item)
-                    } else {
-                      markComplete(item.id)
+                    } else if (isAudioOrVideo) {
+                      handleAudioClick(item)
                     }
                   }}
                 />
