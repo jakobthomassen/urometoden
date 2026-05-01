@@ -61,6 +61,11 @@ export async function onRequestGet({ env, request }) {
     ON CONFLICT(provider, provider_id) DO NOTHING
   `).bind(user.id, googleUser.sub, now).run()
 
+  // Purge expired/revoked sessions for this user to keep the table lean
+  await env.DB.prepare(
+    'DELETE FROM sessions WHERE user_id = ? AND (expires_at < ? OR revoked = 1)'
+  ).bind(user.id, now).run()
+
   // Create a revocable session row
   const sid      = crypto.randomUUID()
   const maxAge   = 60 * 60 * 24 * 30

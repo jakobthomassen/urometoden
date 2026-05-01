@@ -41,7 +41,13 @@ export default function App() {
       .then(r => r.ok ? r.json() : null)
       .then(u => {
         setUser(u)
-        if (u) localStorage.setItem('user_hint', JSON.stringify(u))
+        if (u) localStorage.setItem('user_hint', JSON.stringify({
+          name:                  u.name,
+          display_name:          u.display_name,
+          is_admin:              u.is_admin,
+          membership:            u.membership,
+          membership_expires_at: u.membership_expires_at,
+        }))
         else   localStorage.removeItem('user_hint')
       })
       .catch(() => setUser(null))

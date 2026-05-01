@@ -15,7 +15,7 @@ export const WEEK_1 = {
   title: 'Møt uroen',
   subtitle: 'Bli kjent med din indre uro',
   audio: {
-    src: '/audio/audio1.mp3',
+    src: '/api/audio/audio1.mp3',
     type: 'Ukens lydfil',
     title: 'Hvordan kan jeg bruke uro som en ressurs?',
     info: 'Uroreisen, uke 1',

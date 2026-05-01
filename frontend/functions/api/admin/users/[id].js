@@ -4,7 +4,8 @@ const ALLOWED      = ['is_admin', 'membership', 'membership_expires_at']
 const MEMBERSHIPS  = ['none', 'trial', 'member']
 
 export async function onRequestPatch({ env, request, params }) {
-  if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
+  const caller = await requireAdmin(request, env)
+  if (!caller) return new Response('Forbidden', { status: 403 })
 
   const id = parseInt(params.id)
   if (!Number.isFinite(id)) return new Response('Invalid id', { status: 400 })
@@ -12,6 +13,11 @@ export async function onRequestPatch({ env, request, params }) {
   const body   = await request.json()
   const fields = Object.keys(body).filter(k => ALLOWED.includes(k))
   if (fields.length === 0) return new Response('No valid fields', { status: 400 })
+
+  // Prevent admins from modifying their own admin flag
+  if (id === caller.sub && fields.includes('is_admin')) {
+    return new Response('Cannot modify your own admin status', { status: 403 })
+  }
 
   // Validate each field value
   for (const k of fields) {
@@ -30,6 +36,8 @@ export async function onRequestPatch({ env, request, params }) {
   await env.DB.prepare(`UPDATE users SET ${set} WHERE id = ?`)
     .bind(...values, id).run()
 
-  const user = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
+  const user = await env.DB.prepare(
+    'SELECT id, email, name, display_name, is_admin, membership, membership_expires_at FROM users WHERE id = ?'
+  ).bind(id).first()
   return Response.json(user)
 }
