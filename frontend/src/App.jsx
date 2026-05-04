@@ -11,6 +11,7 @@ import WelcomeModal from './components/WelcomeModal'
 import OnboardingPage from './pages/OnboardingPage'
 import AdminPage from './pages/AdminPage'
 import HelpPage from './pages/HelpPage'
+import KursPage from './pages/KursPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
 import { useUserProgress } from './hooks/useUserProgress'
 import { isMember } from './utils/membership'
@@ -37,14 +38,16 @@ export default function App() {
   const memberAccess = isMember(user)
 
   const {
-    data:          progressData,
+    data:                  progressData,
     stats,
-    loaded:        progressLoaded,
-    startWeek:     startWeekDb,
+    loaded:                progressLoaded,
+    startWeek:             startWeekDb,
     devUnlockWeek,
     updateProgress,
     updateReflection,
-    refresh:       refreshProgress,
+    grantReflectionConsent,
+    reflectionConsent,
+    refresh:               refreshProgress,
   } = useUserProgress()
 
   const { weeks } = useWeekProgress(progressData.weeks)
@@ -147,6 +150,8 @@ export default function App() {
           devUnlockWeek={devUnlockWeek}
           onProgressChange={refreshProgress}
           isAdmin={!!user.is_admin}
+          reflectionConsent={reflectionConsent}
+          grantReflectionConsent={grantReflectionConsent}
         />
       )}
       {activePage === 'Bibliotek' && (
@@ -156,8 +161,11 @@ export default function App() {
           reflections={progressData.reflections}
           updateProgress={updateProgress}
           updateReflection={updateReflection}
+          reflectionConsent={reflectionConsent}
+          grantReflectionConsent={grantReflectionConsent}
         />
       )}
+      {activePage === 'Kurs'      && <KursPage />}
       {activePage === 'Hjelp'     && <HelpPage section={helpSection} />}
       {showRightPanel && <RightPanel stats={stats} weeks={weeks} />}
     </div>

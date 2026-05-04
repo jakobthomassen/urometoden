@@ -18,7 +18,7 @@ function parseDurationMeta(meta) {
 
 export default function ContentCard({
   type, label, title, meta, abstract, weeks, onClick, completed = false,
-  listenSeconds = 0, positionSeconds = 0, isPlaying = false,
+  listenSeconds = 0, positionSeconds = 0, isPlaying = false, onMarkComplete,
 }) {
   const showBar = (type === 'audio' || type === 'video') && listenSeconds >= 60 && !completed
   const duration = parseDurationMeta(meta)
@@ -47,7 +47,21 @@ export default function ContentCard({
           <div className={styles.progressFill} style={{ width: `${barPct}%` }} />
         </div>
       )}
-      {completed && <span className={styles.check} aria-label="Fullført">✓</span>}
+      {onMarkComplete
+        ? (
+          <button
+            className={`${styles.manualCheck} ${completed ? styles.manualCheckDone : ''}`}
+            onClick={e => { e.stopPropagation(); if (!completed) onMarkComplete() }}
+            aria-label={completed ? 'Fullført' : 'Merk som fullført'}
+            title={completed ? 'Fullført' : 'Merk som fullført'}
+          >
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="2 6 5 9 10 3" />
+            </svg>
+          </button>
+        )
+        : completed && <span className={styles.check} aria-label="Fullført">✓</span>
+      }
     </div>
   )
 }

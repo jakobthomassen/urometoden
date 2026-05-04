@@ -10,7 +10,7 @@ export async function onRequestGet({ request, env }) {
     env.DB.prepare('SELECT item_id, completed_at, position_seconds, listen_seconds FROM user_progress WHERE user_id = ?').bind(userId).all(),
     env.DB.prepare('SELECT item_id, body FROM user_reflections WHERE user_id = ?').bind(userId).all(),
     env.DB.prepare('SELECT week_id, started_at, completed_at FROM user_week_progress WHERE user_id = ?').bind(userId).all(),
-    env.DB.prepare('SELECT active_week FROM user_state WHERE user_id = ?').bind(userId).first(),
+    env.DB.prepare('SELECT active_week, reflection_consent_at FROM user_state WHERE user_id = ?').bind(userId).first(),
   ])
 
   const progress = {}
@@ -36,6 +36,7 @@ export async function onRequestGet({ request, env }) {
     progress,
     reflections,
     weeks,
-    active_week: stateRow?.active_week ?? 1,
+    active_week:             stateRow?.active_week             ?? 1,
+    reflection_consent_at:   stateRow?.reflection_consent_at   ?? null,
   })
 }

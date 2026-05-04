@@ -3,6 +3,7 @@ import styles from './BibliotekPage.module.css'
 import ContentCard from '../components/ContentCard'
 import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
+import ConsentModal from '../components/ConsentModal'
 import AudioModal from '../components/AudioModal'
 import AudioPlayer from '../components/AudioPlayer'
 import { SECTION_META, FILTER_OPTIONS } from '../data/library'
@@ -23,11 +24,13 @@ export default function BibliotekPage({
   initialFilter = 'all',
   progress = {}, reflections = {},
   updateProgress, updateReflection,
+  reflectionConsent = false, grantReflectionConsent,
 }) {
   const [filter, setFilter]                     = useState(initialFilter)
   const [sections, setSections]                 = useState([])
   const [loading, setLoading]                   = useState(true)
-  const [activeReflection, setActiveReflection] = useState(null)
+  const [activeReflection, setActiveReflection]   = useState(null)
+  const [pendingReflection, setPendingReflection] = useState(null)
   const [activeCase, setActiveCase]             = useState(null)
   const [activeAudio, setActiveAudio]           = useState(null)
   const [playingAudio, setPlayingAudio]         = useState(null)
@@ -53,6 +56,15 @@ export default function BibliotekPage({
   return (
     <main className={styles.main}>
 
+      <ConsentModal
+        open={pendingReflection !== null}
+        onClose={() => setPendingReflection(null)}
+        onConsent={async () => {
+          await grantReflectionConsent?.()
+          setActiveReflection(pendingReflection)
+          setPendingReflection(null)
+        }}
+      />
       <ReflectionModal
         item={activeReflection}
         savedText={activeReflection ? (reflections[activeReflection.id] ?? '') : ''}
@@ -133,7 +145,10 @@ export default function BibliotekPage({
                       listenSeconds={itemProgress?.listen_seconds ?? 0}
                       positionSeconds={itemProgress?.position_seconds ?? 0}
                       onClick={
-                        section.type === 'reflect' ? () => setActiveReflection(item)
+                        section.type === 'reflect' ? () => {
+                          if (reflectionConsent) setActiveReflection(item)
+                          else setPendingReflection(item)
+                        }
                         : section.type === 'case'  ? () => setActiveCase(item)
                         : section.type === 'audio' ? () => setActiveAudio(item)
                         : undefined
