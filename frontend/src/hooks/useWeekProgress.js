@@ -17,14 +17,15 @@ export function useWeekProgress(weekDbData = {}) {
       status = db.completed_at ? 'done' : 'active'
     }
 
-    const daysUntilUnlock = w.id > 1 && prev.started_at && prev.completed_at
-      ? (() => {
-          const ms = getUnlockTime(prev.started_at).getTime() - Date.now()
-          return ms <= 0 ? 0 : Math.ceil(ms / 86_400_000)
-        })()
+    const unlockAt = w.id > 1 && prev.started_at && prev.completed_at
+      ? getUnlockTime(prev.started_at)
       : null
 
-    return { ...w, status, daysUntilUnlock }
+    const daysUntilUnlock = unlockAt
+      ? Math.max(0, Math.ceil((unlockAt.getTime() - Date.now()) / 86_400_000))
+      : null
+
+    return { ...w, status, daysUntilUnlock, unlockAt }
   })
 
   return { weeks }
