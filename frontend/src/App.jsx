@@ -142,6 +142,7 @@ export default function App() {
       {activePage === 'Uke'       && (
         <HomePage
           weekId={activeWeek}
+          weeks={weeks}
           progress={progressData.progress}
           reflections={progressData.reflections}
           startWeek={startWeekDb}
@@ -149,6 +150,7 @@ export default function App() {
           updateReflection={updateReflection}
           devUnlockWeek={devUnlockWeek}
           onProgressChange={refreshProgress}
+          onNavigateToWeek={navigateToWeek}
           isAdmin={!!user.is_admin}
           reflectionConsent={reflectionConsent}
           grantReflectionConsent={grantReflectionConsent}

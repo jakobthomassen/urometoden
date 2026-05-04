@@ -1,5 +1,15 @@
 # Changelog
 
+## 04.05.2026 (continued)
+
+Week completion state on the home page. When all items in a week are done, a `✓ Fullført` chip appears inline next to the week label. A card at the bottom of the page shows next week's status: if locked, it shows the next week's title, a lock icon, and "Neste uke låses opp om N dager" — admin users also see the dev unlock button here. If unlocked, it shows the next week's title, description, and a "Gå til uke N →" CTA. Week 8 shows a congratulations message instead. `useWeekProgress` now also exports `unlockAt` (a `Date` object from `getUnlockTime`) alongside `daysUntilUnlock`.
+
+Congratulations modal on week completion (weeks 1–7). A `CongratsModal` fires once when `allComplete` transitions from false to true during a session — it does not appear on page load for already-completed weeks, and resets on week change. The modal shows the exact unlock date and time ("Låses opp onsdag 7. mai kl. 10:00") when the next week is locked, or a "Gå til uke N →" CTA when it is already available.
+
+Audio from library modal now auto-plays on entering fullscreen. When "Lytt" is clicked in `AudioModal`, the `AudioPlayer` mounts with `autoFullscreen`. A `shouldAutoPlay` ref triggers `play()` inside the position-restore handler (after seek) so playback starts from the saved position without a jump from 0.
+
+---
+
 ## 04.05.2026
 
 File upload to R2 from the admin panel. New `POST /api/admin/upload` endpoint validates key (extension allowlist, no path traversal), streams the file body to `env.AUDIO_BUCKET.put()`. The file picker in the Innhold tab gains an "Last opp ny fil" tab with a file input, an editable rename field pre-filled from the local filename, and an upload button. On success the picker closes and the `r2_key` field is set automatically.

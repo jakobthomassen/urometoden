@@ -108,6 +108,8 @@ export default function AudioPlayer({
   const playingRef = useRef(playing)
   useEffect(() => { playingRef.current = playing }, [playing])
 
+  const shouldAutoPlay = useRef(autoFullscreen ?? false)
+
   useEffect(() => { if (autoFullscreen) setFullscreen(true) }, [])
 
   // Glow animation when glowKey changes
@@ -121,19 +123,27 @@ export default function AudioPlayer({
   // Restore position on metadata load (or immediately if already loaded)
   useEffect(() => {
     const audio = audioRef.current
-    function trySeek() {
+
+    function trySeekAndPlay() {
       const pos = initialPositionRef.current
       if (pos > 0) {
         audio.currentTime = pos
         setCurrentTime(pos)
       }
+      if (shouldAutoPlay.current) {
+        shouldAutoPlay.current = false
+        audio.play().then(() => setPlaying(true)).catch(() => {})
+      }
     }
+
     function onLoadedMetadata() {
       setDuration(audio.duration)
-      trySeek()
+      trySeekAndPlay()
     }
-    // If metadata already available (e.g. cached), seek right away
-    if (audio.readyState >= 1) trySeek()
+
+    if (audio.readyState >= 1) {
+      trySeekAndPlay()
+    }
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
     return () => audio.removeEventListener('loadedmetadata', onLoadedMetadata)
   }, [])

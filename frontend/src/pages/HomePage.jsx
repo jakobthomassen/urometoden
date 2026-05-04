@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styles from './HomePage.module.css'
 import AudioPlayer from '../components/AudioPlayer'
 import ContentCard from '../components/ContentCard'
@@ -7,14 +7,22 @@ import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
 import ConsentModal from '../components/ConsentModal'
 import ConfirmCompleteModal from '../components/ConfirmCompleteModal'
+import CongratsModal from '../components/CongratsModal'
 import { WEEK_1, WEEKS } from '../data/weeks'
 import { SECTION_META } from '../data/library'
 
+function formatUnlockDays(days) {
+  if (days == null || days <= 0) return 'snart'
+  if (days === 1) return 'i morgen'
+  return `om ${days} dager`
+}
+
 export default function HomePage({
   weekId = 1,
+  weeks = [],
   progress = {}, reflections = {},
   startWeek, updateProgress, updateReflection, devUnlockWeek,
-  onProgressChange, isAdmin,
+  onProgressChange, onNavigateToWeek, isAdmin,
   reflectionConsent = false, grantReflectionConsent,
 }) {
   const weekMeta  = WEEKS.find(w => w.id === weekId) ?? WEEKS[0]
@@ -28,10 +36,14 @@ export default function HomePage({
   const [confirmItem, setConfirmItem]             = useState(null)
   const [playingItem, setPlayingItem]           = useState(null)
   const [glowKey, setGlowKey]                   = useState(0)
+  const [showCongrats, setShowCongrats]         = useState(false)
+  const prevComplete                            = useRef(null)
 
   useEffect(() => {
     startWeek?.(weekId)
     setPlayingItem(null)
+    setShowCongrats(false)
+    prevComplete.current = null
   }, [weekId])
 
   useEffect(() => {
@@ -69,12 +81,29 @@ export default function HomePage({
     onProgressChange?.()
   }
 
-  const allComplete = content.length > 0 && content.every(i => !!progress[i.id]?.completed_at)
-  const hasNextWeek = weekId < 8
+  const allComplete  = content.length > 0 && content.every(i => !!progress[i.id]?.completed_at)
+  const hasNextWeek  = weekId < 8
+  const nextWeek     = hasNextWeek ? weeks.find(w => w.id === weekId + 1) ?? null : null
+  const nextLocked   = nextWeek?.status === 'locked'
+
+  useEffect(() => {
+    if (loading) return
+    if (prevComplete.current === false && allComplete && hasNextWeek) {
+      setShowCongrats(true)
+    }
+    prevComplete.current = allComplete
+  }, [allComplete, loading])
 
   return (
     <main className={styles.main}>
 
+      <CongratsModal
+        open={showCongrats}
+        weekId={weekId}
+        nextWeek={nextWeek}
+        onClose={() => setShowCongrats(false)}
+        onNavigate={onNavigateToWeek}
+      />
       <ConfirmCompleteModal
         item={confirmItem}
         onConfirm={() => markComplete(confirmItem.id)}
@@ -103,7 +132,10 @@ export default function HomePage({
       />
 
       <div className={styles.header}>
-        <div className={styles.weekLabel}>Uke {weekMeta.id} av 8</div>
+        <div className={styles.weekLabelRow}>
+          <span className={styles.weekLabel}>Uke {weekMeta.id} av 8</span>
+          {allComplete && <span className={styles.completedChip}>✓ Fullført</span>}
+        </div>
         <h1 className={styles.title}>{weekMeta.title}</h1>
         <p className={styles.subtitle}>{weekMeta.description}</p>
       </div>
@@ -171,13 +203,54 @@ export default function HomePage({
         <AboutCard heading={week1Data.aboutStrong} body={week1Data.about} />
       )}
 
-      {allComplete && hasNextWeek && isAdmin && (
-        <div className={styles.devUnlock}>
-          <span className={styles.devLabel}>DEV</span>
-          <span className={styles.devText}>Alle moduler fullført.</span>
-          <button className={styles.devBtn} onClick={handleDevUnlock}>
-            Lås opp uke {weekId + 1} nå
-          </button>
+      {allComplete && (
+        <div className={`${styles.nextCard} ${!hasNextWeek ? styles.nextCardFinal : nextLocked ? styles.nextCardLocked : styles.nextCardReady}`}>
+
+          <div className={styles.completionRow}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="2 7 5.5 10.5 12 3.5" />
+            </svg>
+            Uke {weekId} fullført
+          </div>
+
+          <div className={styles.nextDivider} />
+
+          {!hasNextWeek ? (
+            <div className={styles.finalMsg}>
+              <div className={styles.nextTitle}>Du har fullført Urometoden</div>
+              <div className={styles.nextSub}>Gratulerer med gjennomføringen av alle 8 ukene.</div>
+            </div>
+          ) : nextLocked ? (
+            <div className={styles.lockedBody}>
+              <div className={styles.lockRow}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span className={styles.nextTitle}>Uke {nextWeek.id} – {nextWeek.title}</span>
+              </div>
+              <div className={styles.nextSub}>
+                Neste uke låses opp {formatUnlockDays(nextWeek.daysUntilUnlock)}.
+              </div>
+              {isAdmin && (
+                <div className={styles.devRow}>
+                  <span className={styles.devLabel}>DEV</span>
+                  <button className={styles.devBtn} onClick={handleDevUnlock}>
+                    Lås opp uke {nextWeek.id} nå
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={styles.readyBody}>
+              <div className={styles.nextTitle}>Uke {nextWeek.id} – {nextWeek.title}</div>
+              {nextWeek.description && <div className={styles.nextSub}>{nextWeek.description}</div>}
+              <button className={styles.nextBtn} onClick={() => onNavigateToWeek?.(nextWeek.id)}>
+                Gå til uke {nextWeek.id} →
+              </button>
+            </div>
+          )}
+
         </div>
       )}
 
