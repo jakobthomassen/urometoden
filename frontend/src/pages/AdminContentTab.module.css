@@ -761,3 +761,68 @@
   background: var(--surface2);
   color: var(--text-3);
 }
+
+.pickerTabs {
+  display: flex;
+  border-bottom: 0.5px solid var(--border-md);
+}
+
+.pickerTab {
+  flex: 1;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.pickerTab:hover { color: var(--text); }
+
+.pickerTabActive {
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.uploadPanel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.uploadDropzone {
+  position: relative;
+  border: 1px dashed var(--border-md);
+  border-radius: var(--radius);
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadDropzone:has(input:focus-visible) { border-color: var(--accent); }
+
+.uploadInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.uploadLabel {
+  font-size: 13px;
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.6;
+  pointer-events: none;
+  padding: 12px;
+}
+
+.uploadHint {
+  font-size: 11px;
+  color: var(--text-3);
+}

@@ -1,5 +1,19 @@
 # Changelog
 
+## 04.05.2026
+
+File upload to R2 from the admin panel. New `POST /api/admin/upload` endpoint validates key (extension allowlist, no path traversal), streams the file body to `env.AUDIO_BUCKET.put()`. The file picker in the Innhold tab gains an "Last opp ny fil" tab with a file input, an editable rename field pre-filled from the local filename, and an upload button. On success the picker closes and the `r2_key` field is set automatically.
+
+GDPR Article 9 consent gate for reflections. Migration 008 adds `reflection_consent_at INTEGER` to `user_state`. New `POST /api/me/consent` endpoint records the timestamp. `/api/me/progress` now returns `reflection_consent_at`. `useUserProgress` exposes `reflectionConsent` boolean and `grantReflectionConsent()`. A `ConsentModal` (accordion explanation + checkbox + OK/X) intercepts the first click on any reflection card in both the weekly view and the library — the modal reappears on every visit until the user consents. TODO updated to emphasise DPIA as the remaining hard blocker before launch.
+
+Manual complete checkbox on weekly content cards. Each card in the weekly view now shows a faint checkbox button (top-right). Hovering the card raises its opacity; hovering the button directly makes it fully visible with an accent border. Clicking opens a `ConfirmCompleteModal` asking for confirmation before calling `markComplete`. Once complete the button fills with accent colour and a white checkmark. BibliotekPage is unchanged.
+
+Kurs page implemented. New `KursPage` with three sections — Urofordypning, Kurs, Uro-skolen — each rendered as a horizontal scroll row of snap cards (icon + title + description). Cards are ~50% of the available width. Kurs tab enabled in TopNav (`active: false → true`).
+
+Onboarding page now uses the `UroLogo` SVG component instead of the "Uro" script-font text string.
+
+---
+
 ## 01.05.2026 (continued)
 
 User progression migrated to D1 (migration 006). Five new tables: `user_progress` (per-item completion, `position_seconds` resume point, `listen_seconds` cumulative), `user_reflections` (reflection text), `user_week_progress` (week start + completion timestamps), `user_state` (active week), `user_login_days` (one row per Oslo date for streak).

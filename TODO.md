@@ -5,8 +5,14 @@
 **Rate limiting on auth endpoints** *(medium — Cloudflare dashboard)*
 `/api/auth/google` and `/api/auth/callback` are open to abuse. Configure via Cloudflare dashboard → Security → Rate Limiting. No code change needed.
 
-**GDPR Article 9 — reflection text** *(compliance)*
-Reflection text (personal emotional/mental-health data) likely qualifies as special-category data under GDPR. Requires explicit consent and a documented legal basis before launch. Flag to whoever drafts the privacy policy.
+**GDPR Article 9 + DPIA required** *(compliance — must resolve before launch)*
+Reflection text is special-category data under Article 9 (health/mental health). This triggers a mandatory Data Protection Impact Assessment (DPIA) under Article 35 before any live processing — systematic collection of health data by definition meets the threshold. The DPIA must document: the nature and purpose of processing, necessity and proportionality, risks to data subjects, and mitigating measures. Without a completed DPIA, the service cannot lawfully process reflections.
+
+Explicit consent (Article 9(2)(a)) is already gated in the app. Still required before launch:
+- Complete and document the DPIA — assign to whoever handles legal/DPO
+- Draft privacy policy covering the Article 9 processing (see Legal section below)
+- Verify there is no obligation to appoint a DPO (likely not required for a small operator, but confirm)
+- Datatilsynet (_no.datatilsynet.no_) does not require pre-registration, but the DPIA must be available on request
 
 ---
 
@@ -98,7 +104,7 @@ Implement `GET /api/account/export` — returns a JSON file of all data tied to 
 **Consent**
 
 - Cookie consent: the session cookie is strictly necessary (no banner required), but document this in the privacy policy.
-- Reflection text likely qualifies as **special category data under GDPR Article 9** (health/mental health). Requires explicit consent, a documented legal basis, and stronger security measures. Flag to whoever drafts the privacy policy before launch.
+- Article 9 consent gate for reflections is implemented (migration 008, `reflection_consent_at`). The DPIA must be completed before launch — see Security hardening section above.
 
 **Privacy policy page**
 Must cover: what data is collected, why, retention period, third parties (Google OAuth, Cloudflare), and user rights. Write in Norwegian.

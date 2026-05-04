@@ -1,4 +1,5 @@
 import styles from './OnboardingPage.module.css'
+import UroLogo from '../components/UroLogo'
 
 function GoogleIcon() {
   return (
@@ -15,7 +16,7 @@ export default function OnboardingPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.logo}>Uro</div>
+        <UroLogo className={styles.logo} />
         <h1 className={styles.heading}>Lev bedre med uro</h1>
         <p className={styles.sub}>
           Et 8-ukers program som hjelper deg å endre forholdet til uro — ikke bekjempe den.

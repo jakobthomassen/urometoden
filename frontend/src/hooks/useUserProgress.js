@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const EMPTY = { progress: {}, reflections: {}, weeks: {}, active_week: 1 }
+const EMPTY = { progress: {}, reflections: {}, weeks: {}, active_week: 1, reflection_consent_at: null }
 const EMPTY_STATS = { streak: 0, total_listen_seconds: 0, weeks_completed: 0 }
 
 export function useUserProgress() {
@@ -68,6 +68,11 @@ export function useUserProgress() {
     if (patch.completed) refresh()
   }
 
+  async function grantReflectionConsent() {
+    await fetch('/api/me/consent', { method: 'POST' })
+    setData(d => ({ ...d, reflection_consent_at: Date.now() }))
+  }
+
   async function updateReflection(itemId, text) {
     const res = await fetch(`/api/me/reflections/${itemId}`, {
       method:  'PATCH',
@@ -91,5 +96,9 @@ export function useUserProgress() {
     refresh()
   }
 
-  return { data, stats, loaded, startWeek, devUnlockWeek, updateProgress, updateReflection, refresh }
+  return {
+    data, stats, loaded,
+    startWeek, devUnlockWeek, updateProgress, updateReflection, grantReflectionConsent, refresh,
+    reflectionConsent: !!data.reflection_consent_at,
+  }
 }

@@ -6,7 +6,7 @@ const NAV_TABS = [
   { label: 'Hjem',      active: true  },
   { label: 'Reisen',    active: true  },
   { label: 'Bibliotek', active: true  },
-  { label: 'Kurs',      active: false },
+  { label: 'Kurs',      active: true  },
 ]
 
 function SunIcon() {

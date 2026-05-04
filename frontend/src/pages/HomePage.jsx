@@ -5,6 +5,8 @@ import ContentCard from '../components/ContentCard'
 import AboutCard from '../components/AboutCard'
 import ReflectionModal from '../components/ReflectionModal'
 import CaseModal from '../components/CaseModal'
+import ConsentModal from '../components/ConsentModal'
+import ConfirmCompleteModal from '../components/ConfirmCompleteModal'
 import { WEEK_1, WEEKS } from '../data/weeks'
 import { SECTION_META } from '../data/library'
 
@@ -13,14 +15,17 @@ export default function HomePage({
   progress = {}, reflections = {},
   startWeek, updateProgress, updateReflection, devUnlockWeek,
   onProgressChange, isAdmin,
+  reflectionConsent = false, grantReflectionConsent,
 }) {
   const weekMeta  = WEEKS.find(w => w.id === weekId) ?? WEEKS[0]
   const week1Data = weekId === 1 ? WEEK_1 : null
 
   const [content, setContent]                   = useState([])
   const [loading, setLoading]                   = useState(true)
-  const [activeReflection, setActiveReflection] = useState(null)
-  const [activeCase, setActiveCase]             = useState(null)
+  const [activeReflection, setActiveReflection]   = useState(null)
+  const [activeCase, setActiveCase]               = useState(null)
+  const [pendingReflection, setPendingReflection] = useState(null)
+  const [confirmItem, setConfirmItem]             = useState(null)
   const [playingItem, setPlayingItem]           = useState(null)
   const [glowKey, setGlowKey]                   = useState(0)
 
@@ -70,6 +75,20 @@ export default function HomePage({
   return (
     <main className={styles.main}>
 
+      <ConfirmCompleteModal
+        item={confirmItem}
+        onConfirm={() => markComplete(confirmItem.id)}
+        onClose={() => setConfirmItem(null)}
+      />
+      <ConsentModal
+        open={pendingReflection !== null}
+        onClose={() => setPendingReflection(null)}
+        onConsent={async () => {
+          await grantReflectionConsent?.()
+          setActiveReflection(pendingReflection)
+          setPendingReflection(null)
+        }}
+      />
       <ReflectionModal
         item={activeReflection}
         savedText={activeReflection ? (reflections[activeReflection.id] ?? '') : ''}
@@ -130,9 +149,11 @@ export default function HomePage({
                   listenSeconds={itemProgress?.listen_seconds ?? 0}
                   positionSeconds={itemProgress?.position_seconds ?? 0}
                   isPlaying={isCurrentlyPlaying}
+                  onMarkComplete={() => setConfirmItem(item)}
                   onClick={() => {
                     if (item.type === 'reflect') {
-                      setActiveReflection(item)
+                      if (reflectionConsent) setActiveReflection(item)
+                      else setPendingReflection(item)
                     } else if (item.type === 'case') {
                       setActiveCase(item)
                     } else if (isAudioOrVideo) {

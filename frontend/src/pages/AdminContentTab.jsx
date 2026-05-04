@@ -141,16 +141,55 @@ function WeekPicker({ value = [], onChange, showDefault = false }) {
 // ─── FilePicker ─────────────────────────────────────────────────────────────
 
 function FilePicker({ currentKey, onSelect, onClose }) {
-  const [files, setFiles]     = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch]   = useState('')
+  const [files, setFiles]         = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [search, setSearch]       = useState('')
+  const [tab, setTab]             = useState('browse')
+  const [uploadFile, setUploadFile] = useState(null)
+  const [uploadKey, setUploadKey] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
 
-  useEffect(() => {
+  function fetchFiles() {
     const url = currentKey
       ? `/api/admin/bucket?exclude=${encodeURIComponent(currentKey)}`
       : '/api/admin/bucket'
+    setLoading(true)
     fetch(url).then(r => r.json()).then(data => { setFiles(data); setLoading(false) })
-  }, [currentKey])
+  }
+
+  useEffect(() => { fetchFiles() }, [currentKey])
+
+  function handleFileChange(e) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setUploadFile(f)
+    setUploadKey(f.name)
+    setUploadError('')
+  }
+
+  async function handleUpload() {
+    if (!uploadFile || !uploadKey.trim()) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      const form = new FormData()
+      form.append('file', uploadFile)
+      form.append('key', uploadKey.trim())
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+      if (!res.ok) {
+        const text = await res.text()
+        setUploadError(text || 'Opplasting feilet.')
+        setUploading(false)
+        return
+      }
+      const { key } = await res.json()
+      onSelect(key)
+    } catch {
+      setUploadError('Nettverksfeil.')
+      setUploading(false)
+    }
+  }
 
   const filtered = search
     ? files.filter(f => f.key.toLowerCase().includes(search.toLowerCase()))
@@ -163,36 +202,90 @@ function FilePicker({ currentKey, onSelect, onClose }) {
           <span className={styles.pickerTitle}>Velg fil fra bucket</span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
-        <div className={styles.pickerSearch}>
-          <input
-            className={styles.pickerSearchInput}
-            placeholder="Filtrer filer…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus
-          />
+        <div className={styles.pickerTabs}>
+          <button
+            className={`${styles.pickerTab} ${tab === 'browse' ? styles.pickerTabActive : ''}`}
+            onClick={() => setTab('browse')}
+          >Bla gjennom</button>
+          <button
+            className={`${styles.pickerTab} ${tab === 'upload' ? styles.pickerTabActive : ''}`}
+            onClick={() => setTab('upload')}
+          >Last opp ny fil</button>
         </div>
-        <div className={styles.pickerList}>
-          {loading
-            ? <div className={styles.pickerEmpty}>Laster…</div>
-            : filtered.length === 0
-              ? <div className={styles.pickerEmpty}>Ingen filer funnet.</div>
-              : filtered.map(f => (
-                <button
-                  key={f.key}
-                  className={`${styles.pickerFile} ${f.inUse ? styles.pickerFileUsed : ''}`}
-                  disabled={f.inUse}
-                  onClick={() => onSelect(f.key)}
-                >
-                  <span className={styles.pickerFileName}>{f.key}</span>
-                  <span className={styles.pickerFileMeta}>
-                    {formatSize(f.size)}
-                    {f.inUse && <span className={styles.inUseBadge}>I bruk</span>}
-                  </span>
-                </button>
-              ))
-          }
-        </div>
+
+        {tab === 'browse' ? (
+          <>
+            <div className={styles.pickerSearch}>
+              <input
+                className={styles.pickerSearchInput}
+                placeholder="Filtrer filer…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className={styles.pickerList}>
+              {loading
+                ? <div className={styles.pickerEmpty}>Laster…</div>
+                : filtered.length === 0
+                  ? <div className={styles.pickerEmpty}>Ingen filer funnet.</div>
+                  : filtered.map(f => (
+                    <button
+                      key={f.key}
+                      className={`${styles.pickerFile} ${f.inUse ? styles.pickerFileUsed : ''}`}
+                      disabled={f.inUse}
+                      onClick={() => onSelect(f.key)}
+                    >
+                      <span className={styles.pickerFileName}>{f.key}</span>
+                      <span className={styles.pickerFileMeta}>
+                        {formatSize(f.size)}
+                        {f.inUse && <span className={styles.inUseBadge}>I bruk</span>}
+                      </span>
+                    </button>
+                  ))
+              }
+            </div>
+          </>
+        ) : (
+          <div className={styles.uploadPanel}>
+            <div className={styles.uploadDropzone}>
+              <input
+                id="upload-input"
+                type="file"
+                accept=".mp3,.m4a,.aac,.ogg,.wav,.flac,.mp4,.mov,.webm"
+                className={styles.uploadInput}
+                onChange={handleFileChange}
+              />
+              <label htmlFor="upload-input" className={styles.uploadLabel}>
+                {uploadFile
+                  ? <><strong>{uploadFile.name}</strong><br />{formatSize(uploadFile.size)}</>
+                  : <>Klikk for å velge fil<br /><span className={styles.uploadHint}>mp3, m4a, aac, ogg, wav, flac, mp4, mov, webm</span></>
+                }
+              </label>
+            </div>
+            {uploadFile && (
+              <div className={styles.field} style={{ marginTop: '12px' }}>
+                <label className={styles.fieldLabel}>Filnavn i bucket</label>
+                <input
+                  className={styles.input}
+                  value={uploadKey}
+                  onChange={e => { setUploadKey(e.target.value); setUploadError('') }}
+                  placeholder="filnavn.mp3"
+                />
+                <span className={styles.fieldHint}>Endre navn før opplasting om ønskelig.</span>
+              </div>
+            )}
+            {uploadError && <div className={styles.formError}>{uploadError}</div>}
+            <button
+              className={styles.btnPrimary}
+              style={{ marginTop: '12px', width: '100%' }}
+              disabled={!uploadFile || !uploadKey.trim() || uploading}
+              onClick={handleUpload}
+            >
+              {uploading ? 'Laster opp…' : 'Last opp'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

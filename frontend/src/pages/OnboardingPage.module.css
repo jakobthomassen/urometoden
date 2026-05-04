@@ -18,11 +18,10 @@
 }
 
 .logo {
-  font-family: var(--font-script);
-  font-size: 42px;
+  width: 80px;
+  height: auto;
   color: var(--text);
   margin-bottom: 28px;
-  line-height: 1;
 }
 
 .heading {
