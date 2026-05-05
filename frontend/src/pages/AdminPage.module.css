@@ -609,6 +609,183 @@
 .prosjektDocBody details { margin: 8px 0; }
 .prosjektDocBody summary { cursor: pointer; color: var(--text); font-weight: 500; }
 
+/* Kalender tab */
+.kalenderTab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 900px;
+}
+
+.kalenderToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eventAdminList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eventAdminRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.eventAdminLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eventAdminTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.eventAdminMeta {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.eventAdminRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badgeDanger {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+/* Kalender overlay (form + confirm) */
+.kalenderOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+}
+
+.kalenderForm {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 520px;
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-md) transparent;
+}
+
+.kalenderFormHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.kalenderFormTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.formLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+.formInput {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.14s;
+}
+.formInput::placeholder { color: var(--text-3); }
+.formInput:focus { border-color: var(--accent); }
+
+.formSelect {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.14s;
+}
+.formSelect:focus { border-color: var(--accent); }
+
+.formHint {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: -4px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.kalenderConfirm {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kalenderConfirmText {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
 /* Placeholder tabs */
 .placeholder {
   padding: 48px 0;

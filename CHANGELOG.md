@@ -1,5 +1,39 @@
 # Changelog
 
+## 05.05.2026 (continued)
+
+Events system. Migration 009 adds an `events` table (title, event_date ms, type `online|fysisk`, location, link, description, reveal_at, cancelled/cancelled_at, created_at, updated_at).
+
+Public-facing events API (`GET /api/events`, auth required):
+- Upcoming mode: events within a 1-hour grace window after their start time; cancelled events remain visible for 3 days or until their planned datetime (whichever is shorter).
+- Archive mode (`?archive=1`): paginated past events with `hasMore` flag.
+- `sanitizeEvent` strips `link` and `location` and sets `reveal_pending: true` when `reveal_at` is still in the future.
+
+Admin events API:
+- `GET /api/admin/events` — all events, ordered by date desc.
+- `POST /api/admin/events` — create (validates title, event_date, type).
+- `PATCH /api/admin/events/:id` — update fields or toggle `cancel: true/false`.
+- `DELETE /api/admin/events/:id` — hard delete.
+
+Kurs page rewritten:
+- Section order changed to Kurs (events) → Urofordypning → Uro-skolen.
+- Kurs section fetches `/api/events` on mount and renders event cards in a horizontal scroll row (title, type badge, date/time, location if revealed, description truncated to 120 chars). Clicking a card opens a detail modal. Empty state when no upcoming events. "Vis tidligere hendelser" link opens a paginated archive modal (back-button navigation within the modal to event detail).
+- Urofordypning section replaces "Kurs" card with "Fordypningsretreat". Booking modal retained.
+
+Admin "Kalender" tab (new `AdminKalenderTab`):
+- Lists all events with status badges (Kommende / Passert / Avlyst).
+- "Ny hendelse" button opens an overlay form (title, datetime-local, type select, location, link, description, reveal_at datetime).
+- Edit opens the same form pre-filled.
+- Avlys/Gjenopprett toggle; delete with confirmation dialog.
+
+Dashboard: when all week content is done and no active week exists, the next locked week drives a live countdown (`useCountdown`, 1-second interval). Shows "Neste uke" with lock icon and HH:MM:SS countdown when waiting for the next unlock. Button label changes to "Gå til uke N →" when locked vs "Fortsett reisen" / "Start reisen".
+
+RightPanel "Neste uke" section: label updates every 5 minutes via `useUnlockLabel` hook ("Åpner om N dager/timer/min"). Section hidden when all 8 weeks are completed.
+
+Journey page (`/praksis`): heading changed from "Uroreisen" to "Uropraksis".
+
+---
+
 ## 05.05.2026
 
 Client-side routing with React Router v6. All main sections now have stable, bookmarkable URLs. `public/_redirects` (`/* /index.html 200`) enables direct URL loads and refresh on Cloudflare Pages without any dashboard changes.
