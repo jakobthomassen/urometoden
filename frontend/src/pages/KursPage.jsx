@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import styles from './KursPage.module.css'
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ const SECTIONS = [
     id:      'fordypning',
     heading: 'Urofordypning',
     cards: [
-      { icon: <UserIcon />,         title: 'Én-til-én veiledning', desc: 'Personlig veiledning online eller fysisk.' },
+      { icon: <UserIcon />,         title: 'Én-til-én veiledning', desc: 'Personlig veiledning online eller fysisk.', booking: true },
       { icon: <CalendarDaysIcon />, title: 'Kurs',                 desc: 'Fordyp praksisen gjennom kurs og retreats.' },
     ],
   },
@@ -92,11 +93,55 @@ const SECTIONS = [
   },
 ]
 
+// ─── Booking modal ───────────────────────────────────────────────────────────
+
+function BookingModal({ onClose }) {
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div className={styles.backdrop} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal} role="dialog" aria-modal="true">
+
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Én-til-én veiledning</h2>
+          <button className={styles.closeBtn} onClick={onClose} title="Lukk (Esc)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <p className={styles.modalText}>
+          Book en personlig veiledningstime med en av våre veiledere — online eller fysisk.
+          Du finner ledige tider og påmelding på urometoden.no.
+        </p>
+
+        <div className={styles.modalFooter}>
+          <a
+            href="https://www.urometoden.no/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.bookLink}
+          >
+            Gå til timebestilling →
+          </a>
+          <button className={styles.okBtn} onClick={onClose}>OK</button>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 // ─── Components ──────────────────────────────────────────────────────────────
 
-function KursCard({ icon, title, desc }) {
+function KursCard({ icon, title, desc, onClick }) {
   return (
-    <div className={styles.card}>
+    <div className={styles.card} onClick={onClick}>
       <div className={styles.iconWrap}>{icon}</div>
       <div className={styles.cardTitle}>{title}</div>
       <div className={styles.cardDesc}>{desc}</div>
@@ -104,13 +149,19 @@ function KursCard({ icon, title, desc }) {
   )
 }
 
-function KursSection({ heading, cards, last }) {
+function KursSection({ heading, cards, last, onBooking }) {
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionHeading}>{heading}</h2>
       <div className={styles.scrollRow}>
         {cards.map((card, i) => (
-          <KursCard key={i} icon={card.icon} title={card.title} desc={card.desc} />
+          <KursCard
+            key={i}
+            icon={card.icon}
+            title={card.title}
+            desc={card.desc}
+            onClick={card.booking ? onBooking : undefined}
+          />
         ))}
       </div>
       {!last && <div className={styles.divider} />}
@@ -121,8 +172,12 @@ function KursSection({ heading, cards, last }) {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function KursPage() {
+  const [showBooking, setShowBooking] = useState(false)
+
   return (
     <main className={styles.main}>
+      {showBooking && <BookingModal onClose={() => setShowBooking(false)} />}
+
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Kurs</h1>
         <p className={styles.pageSubtitle}>Veiledning, fordypning og Uro-skolen.</p>
@@ -134,6 +189,7 @@ export default function KursPage() {
           heading={section.heading}
           cards={section.cards}
           last={i === SECTIONS.length - 1}
+          onBooking={() => setShowBooking(true)}
         />
       ))}
     </main>
