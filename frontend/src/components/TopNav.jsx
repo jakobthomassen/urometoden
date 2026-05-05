@@ -1,13 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import styles from './TopNav.module.css'
 import UroLogo from './UroLogo'
 
 const NAV_TABS = [
-  { label: 'Hjem',      active: true  },
-  { label: 'Reisen',    active: true  },
-  { label: 'Bibliotek', active: true  },
-  { label: 'Kurs',      active: true  },
+  { label: 'Hjem',      active: true },
+  { label: 'Praksis',   active: true },
+  { label: 'Bibliotek', active: true },
+  { label: 'Kurs',      active: true },
 ]
+
+function isTabActive(label, pathname) {
+  if (label === 'Hjem')      return pathname === '/'
+  if (label === 'Praksis')   return pathname.startsWith('/praksis')
+  if (label === 'Bibliotek') return pathname.startsWith('/bibliotek')
+  if (label === 'Kurs')      return pathname.startsWith('/kurs')
+  return false
+}
 
 function SunIcon() {
   return (
@@ -128,9 +137,10 @@ function useMembershipLabel(user) {
   return { label, type }
 }
 
-export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, user, onLogout, memberAccess }) {
+export default function TopNav({ isDark, onToggleTheme, onNavigate, user, onLogout, memberAccess }) {
   const [menuOpen, setMenuOpen]     = useState(false)
   const menuRef                     = useRef(null)
+  const location                    = useLocation()
   const { label: memberLabel, type: memberType } = useMembershipLabel(user)
 
   useEffect(() => {
@@ -152,14 +162,14 @@ export default function TopNav({ isDark, onToggleTheme, activePage, onNavigate, 
 
       <div className={styles.navLinks}>
         {NAV_TABS.map(tab => {
-          const gated = !memberAccess && (tab.label === 'Reisen' || tab.label === 'Bibliotek')
+          const gated = !memberAccess && (tab.label === 'Praksis' || tab.label === 'Bibliotek')
           return (
             <button
               key={tab.label}
               disabled={!tab.active}
               className={[
                 styles.navTab,
-                (activePage === tab.label || (tab.label === 'Reisen' && activePage === 'Uke')) ? styles.active : '',
+                isTabActive(tab.label, location.pathname) ? styles.active : '',
                 !tab.active ? styles.disabled : '',
                 gated ? styles.gated : '',
               ].filter(Boolean).join(' ')}

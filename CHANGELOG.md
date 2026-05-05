@@ -1,5 +1,27 @@
 # Changelog
 
+## 05.05.2026
+
+Client-side routing with React Router v6. All main sections now have stable, bookmarkable URLs. `public/_redirects` (`/* /index.html 200`) enables direct URL loads and refresh on Cloudflare Pages without any dashboard changes.
+
+Route map:
+- `/` → Dashboard (Hjem)
+- `/praksis` → Journey overview (renamed from Reisen)
+- `/praksis/uke/1–8` → Weekly content
+- `/bibliotek` → Bibliotek
+- `/kurs` → Kurs
+- `/hjelp` → Help
+- `/admin` → Admin (early return, no app chrome)
+- `*` → redirect to `/`
+
+"Reisen" tab renamed to "Praksis" throughout. TopNav derives active state from `useLocation` — no `activePage` prop needed from App. `activeWeek` state removed; current week derived from `useMatch('/praksis/uke/:weekId')` and passed to Sidebar.
+
+Week gating at `/praksis/uke/:weekId`: non-members redirect to `/`; invalid week numbers redirect to `/praksis`; locked weeks render a `LockedWeekView` in-place (lock icon + unlock countdown) rather than redirecting — URL stays stable for bookmarks. Gate only activates once `progressLoaded` is true to avoid false locks during initial data fetch.
+
+Kurs page: "Én-til-én veiledning" card now opens a booking modal with a description, a `Gå til timebestilling →` hyperlink to urometoden.no (opens in new tab), and an OK button. Closes on OK, X, Escape, or backdrop click.
+
+---
+
 ## 04.05.2026 (continued)
 
 Week completion state on the home page. When all items in a week are done, a `✓ Fullført` chip appears inline next to the week label. A card at the bottom of the page shows next week's status: if locked, it shows the next week's title, a lock icon, and "Neste uke låses opp om N dager" — admin users also see the dev unlock button here. If unlocked, it shows the next week's title, description, and a "Gå til uke N →" CTA. Week 8 shows a congratulations message instead. `useWeekProgress` now also exports `unlockAt` (a `Date` object from `getUnlockTime`) alongside `daysUntilUnlock`.
