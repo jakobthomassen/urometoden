@@ -148,11 +148,11 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 400px;
-  padding: 28px 28px 24px;
+  max-width: 480px;
+  padding: 36px 36px 32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   position: relative;
 }
 
@@ -199,8 +199,8 @@
 .modalFooter {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 16px;
+  margin-top: 8px;
 }
 
 .bookLink {

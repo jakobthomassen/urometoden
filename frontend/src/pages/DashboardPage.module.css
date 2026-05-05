@@ -70,6 +70,16 @@
   transition: width 0.5s ease;
 }
 
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+}
+
 .progressCardBottom {
   display: flex;
   justify-content: space-between;

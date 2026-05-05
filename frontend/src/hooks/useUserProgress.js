@@ -22,15 +22,16 @@ export function useUserProgress() {
   useEffect(() => { refresh() }, [refresh])
 
   async function startWeek(weekId) {
-    await fetch(`/api/me/weeks/${weekId}/start`, { method: 'POST' })
+    const res  = await fetch(`/api/me/weeks/${weekId}/start`, { method: 'POST' })
+    const body = res.ok ? await res.json() : null
     setData(d => ({
       ...d,
       active_week: weekId,
       weeks: {
         ...d.weeks,
         [weekId]: {
-          started_at:   d.weeks[weekId]?.started_at   ?? Date.now(),
-          completed_at: d.weeks[weekId]?.completed_at ?? null,
+          started_at:   body?.week?.started_at   ?? d.weeks[weekId]?.started_at   ?? Date.now(),
+          completed_at: body?.week?.completed_at ?? d.weeks[weekId]?.completed_at ?? null,
         },
       },
     }))
