@@ -1,7 +1,30 @@
+import { useState, useEffect } from 'react'
 import styles from './RightPanel.module.css'
 import StatCard from './StatCard'
 import TestimonyCard from './TestimonyCard'
 import CourseCard from './CourseCard'
+
+function getUnlockLabel(unlockAt) {
+  if (!unlockAt) return null
+  const ms    = unlockAt.getTime() - Date.now()
+  if (ms <= 0) return 'Klar nå'
+  const hours = ms / 3_600_000
+  if (hours < 1)   return `Åpner om ${Math.ceil(ms / 60_000)} min`
+  if (hours < 24)  return `Åpner om ${Math.ceil(hours)} timer`
+  const days = Math.ceil(hours / 24)
+  return `Åpner om ${days} dag${days !== 1 ? 'er' : ''}`
+}
+
+function useUnlockLabel(unlockAt) {
+  const [label, setLabel] = useState(() => getUnlockLabel(unlockAt))
+  useEffect(() => {
+    setLabel(getUnlockLabel(unlockAt))
+    if (!unlockAt) return
+    const id = setInterval(() => setLabel(getUnlockLabel(unlockAt)), 5 * 60_000)
+    return () => clearInterval(id)
+  }, [unlockAt])
+  return label
+}
 
 function fmtListenTime(secs = 0) {
   if (secs < 60)   return '0m'
@@ -30,9 +53,10 @@ const COURSES = [
 
 export default function RightPanel({ stats = {}, weeks = [] }) {
   const { streak = 0, total_listen_seconds = 0, weeks_completed = 0 } = stats
-  const streakDisplay = streak >= 3 ? `${streak} 🔥` : `${streak}`
-
-  const nextWeek = weeks.find(w => w.status === 'locked')
+  const streakDisplay  = streak >= 3 ? `${streak} 🔥` : `${streak}`
+  const allDone        = weeks.length > 0 && weeks_completed === 8
+  const nextWeek       = !allDone ? weeks.find(w => w.status === 'locked') : null
+  const unlockLabel    = useUnlockLabel(nextWeek?.unlockAt ?? null)
 
   const STATS = [
     { value: fmtListenTime(total_listen_seconds), label: 'Total lyttetid' },
@@ -57,7 +81,7 @@ export default function RightPanel({ stats = {}, weeks = [] }) {
           <div className={styles.upcomingCard}>
             <div className={styles.upcomingBadge}>{nextWeek.id}</div>
             <div>
-              <div className={styles.upcomingLabel}>Låses opp etter denne uken</div>
+              <div className={styles.upcomingLabel}>{unlockLabel ?? 'Låses opp etter denne uken'}</div>
               <div className={styles.upcomingTitle}>{nextWeek.title}</div>
             </div>
           </div>

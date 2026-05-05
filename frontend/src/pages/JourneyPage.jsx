@@ -33,7 +33,7 @@ export default function JourneyPage({ weeks = [], onNavigateToWeek }) {
     <main className={styles.main}>
 
       <div className={styles.header}>
-        <h1 className={styles.title}>Uroreisen</h1>
+        <h1 className={styles.title}>Uropraksis</h1>
         <p className={styles.subtitle}>8 uker mot mer ro</p>
       </div>
 
