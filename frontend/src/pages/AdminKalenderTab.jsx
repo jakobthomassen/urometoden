@@ -129,9 +129,9 @@ function AdminSectionCard({ card, onEdit, onDelete }) {
 
 // ─── Empty add card ───────────────────────────────────────────────────────────
 
-function AddCard({ label, onClick }) {
+function AddCard({ label, onClick, disabled = false }) {
   return (
-    <button className={styles.kalenderAddCard} onClick={onClick}>
+    <button className={styles.kalenderAddCard} onClick={onClick} disabled={disabled}>
       <span className={styles.kalenderAddCardPlus}>+</span>
       <span className={styles.kalenderAddCardLabel}>{label}</span>
     </button>
@@ -327,7 +327,7 @@ export default function AdminKalenderTab() {
       <div className={styles.kalenderSec}>
         <div className={styles.kalenderSecHead}>
           <span className={styles.kalenderSecLabel}>Urofordypning</span>
-          <button className={styles.tipsAddBtn} onClick={() => openCreateCard('fordypning')}>+ Nytt kort</button>
+          <button className={styles.tipsAddBtn} onClick={() => openCreateCard('fordypning')} disabled={fordypningCards.length >= 2}>+ Nytt kort</button>
         </div>
 
         {cardsLoading ? (
@@ -342,7 +342,7 @@ export default function AdminKalenderTab() {
                 onDelete={() => setConfirmDeleteCard(card)}
               />
             ))}
-            <AddCard label="Nytt kort" onClick={() => openCreateCard('fordypning')} />
+            <AddCard label="Nytt kort" onClick={() => openCreateCard('fordypning')} disabled={fordypningCards.length >= 2} />
           </div>
         )}
       </div>
@@ -353,7 +353,7 @@ export default function AdminKalenderTab() {
       <div className={styles.kalenderSec}>
         <div className={styles.kalenderSecHead}>
           <span className={styles.kalenderSecLabel}>Uro-skolen</span>
-          <button className={styles.tipsAddBtn} onClick={() => openCreateCard('uroskolen')}>+ Nytt kort</button>
+          <button className={styles.tipsAddBtn} onClick={() => openCreateCard('uroskolen')} disabled={urskolenCards.length >= 2}>+ Nytt kort</button>
         </div>
 
         {cardsLoading ? (
@@ -368,7 +368,7 @@ export default function AdminKalenderTab() {
                 onDelete={() => setConfirmDeleteCard(card)}
               />
             ))}
-            <AddCard label="Nytt kort" onClick={() => openCreateCard('uroskolen')} />
+            <AddCard label="Nytt kort" onClick={() => openCreateCard('uroskolen')} disabled={urskolenCards.length >= 2} />
           </div>
         )}
       </div>
