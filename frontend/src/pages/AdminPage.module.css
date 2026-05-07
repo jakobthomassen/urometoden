@@ -327,6 +327,12 @@
   color: var(--accent);
 }
 
+.badgeTrialUsed {
+  background: var(--surface2);
+  color: var(--text-3);
+  border: 0.5px solid var(--border-md);
+}
+
 /* Action buttons */
 .userActions {
   display: flex;

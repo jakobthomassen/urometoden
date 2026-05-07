@@ -30,14 +30,19 @@ export async function onRequestPatch({ env, request, params }) {
       return new Response('membership_expires_at must be null or a positive integer', { status: 400 })
   }
 
-  const set    = fields.map(k => `${k} = ?`).join(', ')
+  const sets   = fields.map(k => `${k} = ?`)
   const values = fields.map(k => body[k])
 
-  await env.DB.prepare(`UPDATE users SET ${set} WHERE id = ?`)
+  // Auto-set has_used_trial whenever a trial is granted
+  if (body.membership === 'trial') {
+    sets.push('has_used_trial = 1')
+  }
+
+  await env.DB.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...values, id).run()
 
   const user = await env.DB.prepare(
-    'SELECT id, email, name, display_name, is_admin, membership, membership_expires_at FROM users WHERE id = ?'
+    'SELECT id, email, name, display_name, is_admin, membership, membership_expires_at, has_used_trial FROM users WHERE id = ?'
   ).bind(id).first()
   return Response.json(user)
 }
