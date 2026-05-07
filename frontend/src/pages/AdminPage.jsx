@@ -4,13 +4,14 @@ import DOMPurify from 'dompurify'
 import styles from './AdminPage.module.css'
 import AdminContentTab from './AdminContentTab'
 import AdminKalenderTab from './AdminKalenderTab'
+import AdminLoggTab from './AdminLoggTab'
 import UroLogo from '../components/UroLogo'
 // DEV ONLY — remove before prod: bundles markdown files into the client build
 import changelogRaw from '../../../CHANGELOG.md?raw'
 import todoRaw      from '../../../TODO.md?raw'
 
 // DEV ONLY — remove 'Prosjekt' tab before prod
-const TABS = ['Brukere', 'Daglige tips', 'Innhold', 'Kalender', 'Prosjekt']
+const TABS = ['Brukere', 'Daglige tips', 'Innhold', 'Kalender', 'Logg', 'Prosjekt']
 const DAY  = 24 * 60 * 60 * 1000
 
 function getInitials(name) {
@@ -409,6 +410,8 @@ export default function AdminPage({ user, onLogout }) {
         {activeTab === 'Innhold' && <AdminContentTab />}
 
         {activeTab === 'Kalender' && <AdminKalenderTab />}
+
+        {activeTab === 'Logg' && <AdminLoggTab />}
 
         {activeTab === 'Prosjekt' && (
           <div className={styles.prosjekt}>

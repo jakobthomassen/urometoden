@@ -1,4 +1,5 @@
 import { requireAdmin } from '../../../lib/auth.js'
+import { logEvent } from '../../../lib/logger.js'
 
 const ALLOWED      = ['is_admin', 'membership', 'membership_expires_at']
 const MEMBERSHIPS  = ['none', 'trial', 'member']
@@ -40,6 +41,24 @@ export async function onRequestPatch({ env, request, params }) {
 
   await env.DB.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...values, id).run()
+
+  // Emit log events for each meaningful change
+  if ('membership' in body) {
+    if (body.membership === 'trial') {
+      await logEvent(env, { event: 'user.trial_granted',  tag: 'tilgang', actorId: caller.sub, targetId: id })
+    } else if (body.membership === 'member') {
+      await logEvent(env, { event: 'user.member_granted', tag: 'tilgang', actorId: caller.sub, targetId: id })
+    } else if (body.membership === 'none') {
+      await logEvent(env, { event: 'user.access_revoked', tag: 'tilgang', actorId: caller.sub, targetId: id })
+    }
+  }
+  if ('is_admin' in body) {
+    if (body.is_admin === 1) {
+      await logEvent(env, { event: 'user.admin_promoted', tag: 'admin', actorId: caller.sub, targetId: id })
+    } else if (body.is_admin === 0) {
+      await logEvent(env, { event: 'user.admin_revoked',  tag: 'admin', actorId: caller.sub, targetId: id })
+    }
+  }
 
   const user = await env.DB.prepare(
     'SELECT id, email, name, display_name, is_admin, membership, membership_expires_at, has_used_trial FROM users WHERE id = ?'

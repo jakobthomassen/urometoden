@@ -1,4 +1,5 @@
 import { signJwt, parseCookies } from '../../lib/jwt.js'
+import { logEvent } from '../../lib/logger.js'
 
 export async function onRequestGet({ env, request }) {
   const url      = new URL(request.url)
@@ -44,6 +45,11 @@ export async function onRequestGet({ env, request }) {
 
   const now = Date.now()
 
+  // Check before upsert so we can detect a genuine new signup
+  const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?')
+    .bind(googleUser.email).first()
+  const isNewUser = !existing
+
   // Upsert user by email
   await env.DB.prepare(`
     INSERT INTO users (email, name, created_at)
@@ -61,14 +67,23 @@ export async function onRequestGet({ env, request }) {
     ON CONFLICT(provider, provider_id) DO NOTHING
   `).bind(user.id, googleUser.sub, now).run()
 
+  if (isNewUser) {
+    await logEvent(env, {
+      event:    'user.signup',
+      tag:      'bruker',
+      targetId: user.id,
+      meta:     { email: user.email },
+    })
+  }
+
   // Purge expired/revoked sessions for this user to keep the table lean
   await env.DB.prepare(
     'DELETE FROM sessions WHERE user_id = ? AND (expires_at < ? OR revoked = 1)'
   ).bind(user.id, now).run()
 
   // Create a revocable session row
-  const sid      = crypto.randomUUID()
-  const maxAge   = 60 * 60 * 24 * 30
+  const sid    = crypto.randomUUID()
+  const maxAge = 60 * 60 * 24 * 30
   await env.DB.prepare(
     'INSERT INTO sessions (id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
   ).bind(sid, user.id, now, now + maxAge * 1000).run()
@@ -84,7 +99,6 @@ export async function onRequestGet({ env, request }) {
   headers.set('Location', '/')
   headers.append('Set-Cookie', `oauth_state=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`)
   headers.append('Set-Cookie', `session=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`)
-
 
   return new Response(null, { status: 302, headers })
 }

@@ -1,4 +1,5 @@
 import { requireAdmin } from '../../../lib/auth.js'
+import { logEvent } from '../../../lib/logger.js'
 
 export async function onRequestGet({ request, env }) {
   if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
@@ -11,7 +12,8 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
+  const caller = await requireAdmin(request, env)
+  if (!caller) return new Response('Forbidden', { status: 403 })
 
   const body = await request.json()
   const { title, event_date, type, location, link, description, reveal_at } = body
@@ -32,5 +34,13 @@ export async function onRequestPost({ request, env }) {
   ).run()
 
   const created = await env.DB.prepare('SELECT * FROM events WHERE id = ?').bind(meta.last_row_id).first()
+
+  await logEvent(env, {
+    event:   'event.created',
+    tag:     'arrangement',
+    actorId: caller.sub,
+    meta:    { event_id: created.id, title: created.title },
+  })
+
   return Response.json(created, { status: 201 })
 }
