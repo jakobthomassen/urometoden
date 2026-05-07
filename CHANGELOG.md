@@ -1,5 +1,48 @@
 # Changelog
 
+## 07.05.2026 (continued x3)
+
+Section cards and admin Kalender tab redesign.
+
+Migration 012 adds `section_cards` table: `section` (fordypning | uroskolen), `icon`, `title`, `description`, `link`, `link_label`, `sort_order`. Seeded with the 4 cards that were previously hardcoded in KursPage.
+
+`CardIcons.jsx` — shared icon library (16 icons: user, calendar-days, info, layers, heart, book, star, compass, leaf, sun, moon, chat, video, award, music, home). Exports `CardIcon({ name, size })` and `CARD_ICON_KEYS` / `CARD_ICON_LABELS` for the admin icon picker.
+
+New API endpoints:
+- `GET /api/section-cards` — auth-required; returns all section cards ordered by section + sort_order
+- `GET /api/admin/section-cards` — admin GET (same query)
+- `POST /api/admin/section-cards` — create card; logs `section_card.created`
+- `PATCH /api/admin/section-cards/:id` — update fields; logs `section_card.updated`
+- `DELETE /api/admin/section-cards/:id` — delete; logs `section_card.deleted`
+
+`AdminKalenderTab` rewritten: three-section layout (Kurs / Urofordypning / Uro-skolen) matching the user-facing KursPage design. Each card shows an admin hover overlay with pencil, cancel/restore (events only), and trash buttons. Event form unchanged. New card form includes a visual 8-column icon picker, section selector, title, description, link, and link-label fields. Dashed "add" placeholder cards at the end of each scroll row.
+
+`KursPage` updated: Urofordypning and Uro-skolen sections now fetch from `GET /api/section-cards` and render `KursCard` components with DB data. `BookingModal` replaced by generic `CardModal` (no OK button — X only); modal shows icon, title, description, and an optional link button using the card's `link_label`. `EventDetailModal` loses its Lukk footer button — X closes only. `ArchiveModal` detail view unchanged (already X-only).
+
+Audit log catalog extended with `section_card.created`, `section_card.updated`, `section_card.deleted` events. `describeExtra` now shows titles for `section_card.*` events.
+
+---
+
+## 07.05.2026 (continued x2)
+
+Audit log system. Migration 011 adds a `logs` table (event, tag, actor_id, target_id, meta JSON, created_at). No FK constraints on actor/target — the audit trail intentionally survives user and event deletion. Indexed on created_at, tag, and event.
+
+`lib/logger.js` — shared `logEvent(env, { event, tag, actorId, targetId, meta })` helper used by all instrumented endpoints.
+
+Events now logged:
+- `user.signup` (tag: bruker) — new Google OAuth user, detected pre-upsert in `callback.js`
+- `user.trial_granted` / `user.member_granted` / `user.access_revoked` (tag: tilgang) — admin membership changes in `admin/users/[id].js`
+- `user.admin_promoted` / `user.admin_revoked` (tag: admin) — admin flag changes
+- `user.membership_expired` (tag: tilgang) — lazy expiry in `me.js`
+- `user.account_deleted` (tag: bruker) — logged before deletion in `me/account.js`; name+email stored in meta since user row is gone after
+- `event.created` / `event.updated` / `event.cancelled` / `event.restored` / `event.deleted` (tag: arrangement) — all event CRUD in admin endpoints; event title stored in meta
+
+`GET /api/admin/logs` — paginated log reader (admin-only). Supports `tag` filter and `page`/`per_page`. JOINs `users` for actor/target names; handles deleted users via meta fallback in the UI.
+
+Admin "Logg" tab (`AdminLoggTab`): tag filter pills (Alle / Bruker / Tilgang / Admin / Arrangement), log rows with coloured tag badge, human-readable event label, target/actor names, relative timestamp, "Vis mer" load-more button. Inline TODO comments mark future events (event signup, check-in, event.ended, week completion) pending those features.
+
+---
+
 ## 07.05.2026 (continued)
 
 Membership expiry enforcement. Migration 010 adds `has_used_trial INTEGER NOT NULL DEFAULT 0` to `users`.

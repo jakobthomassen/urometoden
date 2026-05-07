@@ -1,10 +1,10 @@
 import { getSession } from '../../lib/auth.js'
+import { logEvent } from '../../lib/logger.js'
 
 export async function onRequestGet({ env, request }) {
   const payload = await getSession(request, env)
   if (!payload) return new Response('Unauthorized', { status: 401 })
 
-  // Fetch live from DB so membership and is_admin are always current
   const user = await env.DB.prepare(
     'SELECT id, email, name, display_name, is_admin, membership, membership_expires_at, has_used_trial FROM users WHERE id = ?'
   ).bind(payload.sub).first()
@@ -16,6 +16,13 @@ export async function onRequestGet({ env, request }) {
     await env.DB.prepare(
       "UPDATE users SET membership = 'none', membership_expires_at = NULL WHERE id = ?"
     ).bind(user.id).run()
+
+    await logEvent(env, {
+      event:    'user.membership_expired',
+      tag:      'tilgang',
+      targetId: user.id,
+    })
+
     user.membership            = 'none'
     user.membership_expires_at = null
   }

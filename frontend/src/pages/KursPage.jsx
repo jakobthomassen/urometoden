@@ -1,56 +1,22 @@
 import { useState, useEffect } from 'react'
 import styles from './KursPage.module.css'
+import { CardIcon } from '../components/CardIcons'
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
-
-function UserIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
-    </svg>
-  )
-}
-
-function CalendarDaysIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-      <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="15" r="1" fill="currentColor" stroke="none" />
-      <circle cx="8" cy="19" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function InfoIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <line x1="12" y1="16" x2="12" y2="12" />
-      <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function LayersIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  )
-}
 
 function MapPinIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
       <circle cx="12" cy="9" r="2.5" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   )
 }
@@ -72,13 +38,7 @@ function truncate(str, max = 120) {
   return str.length > max ? str.slice(0, max).trimEnd() + '…' : str
 }
 
-function CloseIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  )
-}
+// ─── TypeBadge ────────────────────────────────────────────────────────────────
 
 function TypeBadge({ type, cancelled }) {
   if (cancelled === 1) return <span className={`${styles.typeBadge} ${styles.typeBadgeCancelled}`}>Avlyst</span>
@@ -90,9 +50,9 @@ function TypeBadge({ type, cancelled }) {
   )
 }
 
-// ─── BookingModal ─────────────────────────────────────────────────────────────
+// ─── CardModal ────────────────────────────────────────────────────────────────
 
-function BookingModal({ onClose }) {
+function CardModal({ card, onClose }) {
   useEffect(() => {
     const handler = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -104,21 +64,20 @@ function BookingModal({ onClose }) {
       <div className={styles.modal} role="dialog" aria-modal="true">
 
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Én-til-én veiledning</h2>
+          <div className={styles.modalTitleGroup}>
+            <div className={styles.iconWrap}><CardIcon name={card.icon} /></div>
+            <h2 className={styles.modalTitle}>{card.title}</h2>
+          </div>
           <button className={styles.closeBtn} onClick={onClose} title="Lukk (Esc)"><CloseIcon /></button>
         </div>
 
-        <p className={styles.modalText}>
-          Book en personlig veiledningstime med en av våre veiledere — online eller fysisk.
-          Du finner ledige tider og påmelding på urometoden.no.
-        </p>
+        {card.description && <p className={styles.modalText}>{card.description}</p>}
 
-        <div className={styles.modalFooter}>
-          <a href="https://www.urometoden.no/" target="_blank" rel="noopener noreferrer" className={styles.bookLink}>
-            Gå til timebestilling →
+        {card.link && (
+          <a href={card.link} target="_blank" rel="noopener noreferrer" className={styles.bookLink}>
+            {card.link_label || 'Les mer'} →
           </a>
-          <button className={styles.okBtn} onClick={onClose}>OK</button>
-        </div>
+        )}
 
       </div>
     </div>
@@ -173,10 +132,6 @@ function EventDetailModal({ event, onClose }) {
               Gå til arrangement →
             </a>
           )}
-        </div>
-
-        <div className={styles.modalFooter}>
-          <button className={styles.okBtn} onClick={onClose}>Lukk</button>
         </div>
 
       </div>
@@ -311,12 +266,13 @@ function EventCard({ event, onClick }) {
 
 // ─── KursCard ─────────────────────────────────────────────────────────────────
 
-function KursCard({ icon, title, desc, onClick }) {
+function KursCard({ card, onClick }) {
   return (
-    <div className={styles.card} onClick={onClick} style={onClick ? undefined : { cursor: 'default' }}>
-      <div className={styles.iconWrap}>{icon}</div>
-      <div className={styles.cardTitle}>{title}</div>
-      <div className={styles.cardDesc}>{desc}</div>
+    <div className={styles.card} onClick={() => onClick(card)}>
+      <div className={styles.iconWrap}><CardIcon name={card.icon} /></div>
+      <div className={styles.cardTitle}>{card.title}</div>
+      {card.description && <div className={styles.cardDesc}>{card.description}</div>}
+      {card.link_label && <div className={styles.cardLinkHint}>{card.link_label} →</div>}
     </div>
   )
 }
@@ -324,11 +280,12 @@ function KursCard({ icon, title, desc, onClick }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function KursPage() {
-  const [showBooking, setShowBooking]       = useState(false)
+  const [selectedCard, setSelectedCard]     = useState(null)
   const [selectedEvent, setSelectedEvent]   = useState(null)
   const [showArchive, setShowArchive]       = useState(false)
   const [events, setEvents]                 = useState([])
   const [eventsLoading, setEventsLoading]   = useState(true)
+  const [sectionCards, setSectionCards]     = useState({ fordypning: [], uroskolen: [] })
 
   useEffect(() => {
     fetch('/api/events')
@@ -337,9 +294,22 @@ export default function KursPage() {
       .catch(() => setEventsLoading(false))
   }, [])
 
+  useEffect(() => {
+    fetch('/api/section-cards')
+      .then(r => r.json())
+      .then(data => {
+        const grouped = { fordypning: [], uroskolen: [] }
+        for (const card of data) {
+          if (grouped[card.section]) grouped[card.section].push(card)
+        }
+        setSectionCards(grouped)
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <main className={styles.main}>
-      {showBooking   && <BookingModal onClose={() => setShowBooking(false)} />}
+      {selectedCard  && <CardModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       {selectedEvent && <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
       {showArchive   && <ArchiveModal onClose={() => setShowArchive(false)} />}
 
@@ -373,32 +343,29 @@ export default function KursPage() {
       </div>
 
       {/* Urofordypning */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionHeading}>Urofordypning</h2>
-        <div className={styles.scrollRow}>
-          <KursCard
-            icon={<UserIcon />}
-            title="Én-til-én veiledning"
-            desc="Personlig veiledning online eller fysisk."
-            onClick={() => setShowBooking(true)}
-          />
-          <KursCard
-            icon={<CalendarDaysIcon />}
-            title="Fordypningsretreat"
-            desc="Fordyp praksisen gjennom retreats og workshops."
-          />
+      {sectionCards.fordypning.length > 0 && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionHeading}>Urofordypning</h2>
+          <div className={styles.scrollRow}>
+            {sectionCards.fordypning.map(card => (
+              <KursCard key={card.id} card={card} onClick={setSelectedCard} />
+            ))}
+          </div>
+          <div className={styles.divider} />
         </div>
-        <div className={styles.divider} />
-      </div>
+      )}
 
       {/* Uro-skolen */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionHeading}>Uro-skolen</h2>
-        <div className={styles.scrollRow}>
-          <KursCard icon={<InfoIcon />}   title="Kommer snart" desc="Innhold er under utarbeidelse." />
-          <KursCard icon={<LayersIcon />} title="Kommer snart" desc="Innhold er under utarbeidelse." />
+      {sectionCards.uroskolen.length > 0 && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionHeading}>Uro-skolen</h2>
+          <div className={styles.scrollRow}>
+            {sectionCards.uroskolen.map(card => (
+              <KursCard key={card.id} card={card} onClick={setSelectedCard} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
     </main>
   )
