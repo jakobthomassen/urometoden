@@ -24,10 +24,11 @@ function formatDate(ts) {
 }
 
 function MemberBadge({ membership, expiresAt }) {
-  if (membership === 'member') {
+  const active = !expiresAt || expiresAt > Date.now()
+  if (membership === 'member' && active) {
     return <span className={`${styles.badge} ${styles.badgeMember}`}>Medlem · {formatDate(expiresAt)}</span>
   }
-  if (membership === 'trial') {
+  if (membership === 'trial' && active) {
     return <span className={`${styles.badge} ${styles.badgeTrial}`}>Prøveperiode · {formatDate(expiresAt)}</span>
   }
   return <span className={`${styles.badge} ${styles.badgeNone}`}>Ingen tilgang</span>
@@ -62,6 +63,7 @@ function UserRow({ user, currentUserId, onUpdate }) {
 
       <div className={styles.userBadges}>
         <MemberBadge membership={user.membership} expiresAt={user.membership_expires_at} />
+        {!!user.has_used_trial && <span className={`${styles.badge} ${styles.badgeTrialUsed}`}>Prøve brukt</span>}
         {!!user.is_admin && <span className={`${styles.badge} ${styles.badgeAdmin}`}>Admin</span>}
       </div>
 

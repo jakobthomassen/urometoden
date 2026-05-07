@@ -1,5 +1,30 @@
 # Changelog
 
+## 07.05.2026 (continued)
+
+Membership expiry enforcement. Migration 010 adds `has_used_trial INTEGER NOT NULL DEFAULT 0` to `users`.
+
+`GET /api/auth/me` now lazily expires memberships on every login: if `membership_expires_at` is in the past and `membership != 'none'`, the row is updated to `membership = 'none', membership_expires_at = NULL` before the response is returned. This keeps the DB clean without a cron job.
+
+Admin user management:
+- `PATCH /api/admin/users/:id` automatically sets `has_used_trial = 1` whenever `membership = 'trial'` is granted. The field is now included in both the PATCH response and the GET list.
+- `MemberBadge` component checks `membership_expires_at > now` before rendering the coloured trial/member badge — expired users now correctly show "Ingen tilgang" without waiting for a DB cleanup.
+- Admin user rows show a muted "Prøve brukt" badge when `has_used_trial = 1`, giving admins visibility into repeat trial requests.
+
+---
+
+## 07.05.2026
+
+Profil and Innstillinger modal. Clicking either item in the avatar dropdown now opens a split-pane `SettingsModal` (168 px sidebar + scrollable content area) instead of being disabled placeholders.
+
+Profil panel: avatar initials, display name, email, membership badge (Medlem / Prøveperiode N dager igjen / Ikke medlem), and read-only field rows for name, email, and membership status. Danger zone at the bottom with a "Slett konto" button that transitions the panel to a centered confirmation step before executing deletion.
+
+Account deletion (`DELETE /api/me/account`): batch-deletes all user rows — `user_progress`, `user_reflections`, `user_week_progress`, `user_state`, `user_login_days`, `sessions`, `users` (identities cascade automatically). Clears the session cookie in the response. Frontend calls `setUser(null)` after the request, which transitions to the onboarding screen. TODO comment in the endpoint to update the delete list when new user-linked tables are added.
+
+Innstillinger panel: working dark/light theme toggle (replaces the toggle that was only in the TopNav). Three mock notification toggles (e-postvarsler, ukentlige påminnelser, fremdriftsoppsummering) rendered as disabled with a "kommer snart" hint.
+
+---
+
 ## 05.05.2026 (continued)
 
 Events system. Migration 009 adds an `events` table (title, event_date ms, type `online|fysisk`, location, link, description, reveal_at, cancelled/cancelled_at, created_at, updated_at).
