@@ -16,6 +16,7 @@ import KursPage from './pages/KursPage'
 import { useWeekProgress } from './hooks/useWeekProgress'
 import { useUserProgress } from './hooks/useUserProgress'
 import { isMember } from './utils/membership'
+import SettingsModal from './components/SettingsModal'
 
 function getInitialDark() {
   const stored = localStorage.getItem('theme')
@@ -89,6 +90,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [bibliotekFilter, setBibliotekFilter]   = useState('all')
   const [helpSection, setHelpSection]           = useState('hjelp')
+  const [settingsPanel, setSettingsPanel]       = useState(null)
 
   const routerNav    = useNavigate()
   const location     = useLocation()
@@ -130,6 +132,12 @@ export default function App() {
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
+    localStorage.removeItem('user_hint')
+    setUser(null)
+  }
+
+  async function handleDeleteAccount() {
+    await fetch('/api/me/account', { method: 'DELETE' })
     localStorage.removeItem('user_hint')
     setUser(null)
   }
@@ -178,6 +186,16 @@ export default function App() {
   return (
     <div className={gridClass}>
       <WelcomeModal onStart={() => routerNav('/praksis/uke/1')} />
+      {settingsPanel && (
+        <SettingsModal
+          user={user}
+          initialPanel={settingsPanel}
+          isDark={isDark}
+          onToggleTheme={() => setIsDark(d => !d)}
+          onClose={() => setSettingsPanel(null)}
+          onDeleteAccount={handleDeleteAccount}
+        />
+      )}
       <TopNav
         isDark={isDark}
         onToggleTheme={() => setIsDark(d => !d)}
@@ -185,6 +203,7 @@ export default function App() {
         user={user}
         onLogout={handleLogout}
         memberAccess={memberAccess}
+        onOpenSettings={panel => setSettingsPanel(panel)}
       />
       <Sidebar
         weeks={weeks}
