@@ -20,6 +20,11 @@ const EVENT_LABELS = {
   'section_card.created':    'Seksjonskort opprettet',
   'section_card.updated':    'Seksjonskort oppdatert',
   'section_card.deleted':    'Seksjonskort slettet',
+  'tip.created':             'Tips lagt til',
+  'tip.deleted':             'Tips slettet',
+  'content.created':         'Innholdselement opprettet',
+  'content.updated':         'Innholdselement oppdatert',
+  'content.deleted':         'Innholdselement slettet',
   // TODO: add when event signup system is implemented
   // 'user.event_signup':    'Påmeldt arrangement',
   // 'user.event_checkin':   'Sjekket inn til arrangement',
@@ -34,6 +39,7 @@ const TAGS = [
   { id: 'tilgang',     label: 'Tilgang'       },
   { id: 'admin',       label: 'Admin'         },
   { id: 'arrangement', label: 'Arrangement'   },
+  { id: 'innhold',     label: 'Innhold'       },
 ]
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -73,7 +79,8 @@ function describeActor(log) {
 
 function describeExtra(log) {
   const meta = parseLogMeta(log)
-  if ((log.event.startsWith('event.') || log.event.startsWith('section_card.')) && meta.title) return `«${meta.title}»`
+  if ((log.event.startsWith('event.') || log.event.startsWith('section_card.') || log.event.startsWith('content.')) && meta.title) return `«${meta.title}»`
+  if (log.event.startsWith('tip.') && meta.body_preview) return `«${meta.body_preview}»`
   return null
 }
 

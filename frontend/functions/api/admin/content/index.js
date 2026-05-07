@@ -1,4 +1,5 @@
 import { requireAdmin } from '../../../lib/auth.js'
+import { logEvent } from '../../../lib/logger.js'
 
 const VALID_TYPES = ['audio', 'video', 'case', 'reflect']
 
@@ -20,7 +21,8 @@ export async function onRequestGet({ env, request }) {
 }
 
 export async function onRequestPost({ env, request }) {
-  if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
+  const caller = await requireAdmin(request, env)
+  if (!caller) return new Response('Forbidden', { status: 403 })
 
   const { id, type, title, meta, r2_key, abstract, body, prompt, weeks } = await request.json()
 
@@ -50,5 +52,13 @@ export async function onRequestPost({ env, request }) {
   }
 
   const item = await env.DB.prepare('SELECT * FROM content_items WHERE id = ?').bind(id.trim()).first()
+
+  await logEvent(env, {
+    event:   'content.created',
+    tag:     'innhold',
+    actorId: caller.sub,
+    meta:    { content_id: item.id, title: item.title, type: item.type },
+  })
+
   return Response.json({ ...item, weeks: assignedWeeks }, { status: 201 })
 }
