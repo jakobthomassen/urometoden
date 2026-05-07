@@ -1,6 +1,6 @@
 import { requireAdmin } from '../../lib/auth.js'
 
-const VALID_TAGS = new Set(['bruker', 'tilgang', 'admin', 'arrangement'])
+const VALID_TAGS = new Set(['bruker', 'tilgang', 'admin', 'arrangement', 'innhold'])
 
 export async function onRequestGet({ request, env }) {
   if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })

@@ -712,6 +712,11 @@
   color: var(--color-audio-fg);
 }
 
+.logTag_innhold {
+  background: color-mix(in srgb, var(--done) 12%, transparent);
+  color: var(--done);
+}
+
 .logBody {
   flex: 1;
   min-width: 0;

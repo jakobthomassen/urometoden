@@ -1,4 +1,5 @@
 import { requireAdmin } from '../../../lib/auth.js'
+import { logEvent } from '../../../lib/logger.js'
 
 const FIELD_QUERIES = {
   title:    'UPDATE content_items SET title    = ? WHERE id = ?',
@@ -10,7 +11,8 @@ const FIELD_QUERIES = {
 }
 
 export async function onRequestPatch({ env, request, params }) {
-  if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
+  const caller = await requireAdmin(request, env)
+  if (!caller) return new Response('Forbidden', { status: 403 })
 
   const payload = await request.json()
   const { weeks, ...fields } = payload
@@ -36,6 +38,13 @@ export async function onRequestPatch({ env, request, params }) {
   const item = await env.DB.prepare('SELECT * FROM content_items WHERE id = ?').bind(params.id).first()
   if (!item) return new Response('Not found', { status: 404 })
 
+  await logEvent(env, {
+    event:   'content.updated',
+    tag:     'innhold',
+    actorId: caller.sub,
+    meta:    { content_id: item.id, title: item.title, type: item.type },
+  })
+
   const { results: assignedWeeks } = await env.DB.prepare(
     'SELECT week_id, position, is_default FROM week_content WHERE content_id = ? ORDER BY week_id'
   ).bind(params.id).all()
@@ -44,9 +53,22 @@ export async function onRequestPatch({ env, request, params }) {
 }
 
 export async function onRequestDelete({ env, request, params }) {
-  if (!await requireAdmin(request, env)) return new Response('Forbidden', { status: 403 })
+  const caller = await requireAdmin(request, env)
+  if (!caller) return new Response('Forbidden', { status: 403 })
+
+  const item = await env.DB.prepare('SELECT title, type FROM content_items WHERE id = ?').bind(params.id).first()
 
   await env.DB.prepare('DELETE FROM week_content WHERE content_id = ?').bind(params.id).run()
   await env.DB.prepare('DELETE FROM content_items WHERE id = ?').bind(params.id).run()
+
+  if (item) {
+    await logEvent(env, {
+      event:   'content.deleted',
+      tag:     'innhold',
+      actorId: caller.sub,
+      meta:    { content_id: params.id, title: item.title, type: item.type },
+    })
+  }
+
   return new Response(null, { status: 204 })
 }
