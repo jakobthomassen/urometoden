@@ -6,6 +6,8 @@ export type ContentItem = {
   id:       number
   title:    string
   abstract: string | null
+  body:     string | null
+  prompt:   string | null
   type:     'audio' | 'case' | 'reflect' | 'video'
   meta:     string | null
   r2_key:   string | null

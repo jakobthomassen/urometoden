@@ -5,9 +5,9 @@ import {
 } from 'react-native'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
-import { usePlayer } from '@/context/PlayerContext'
 import { apiFetch } from '@/lib/api'
 import ContentCard, { ContentItem } from '@/components/library/ContentCard'
+import ContentModal from '@/components/library/ContentModal'
 
 const FILTERS = [
   { label: 'Alle',        value: 'all' },
@@ -52,12 +52,13 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 export default function LydbibliotekScreen() {
   const { colors: C }   = useTheme()
   const { token }        = useAuth()
-  const { play, track: playingTrack } = usePlayer()
 
-  const [filter, setFilter]     = useState('all')
-  const [sections, setSections] = useState<{ type: string; label: string; items: ContentItem[] }[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState<string | null>(null)
+
+  const [filter, setFilter]         = useState('all')
+  const [sections, setSections]     = useState<{ type: string; label: string; items: ContentItem[] }[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [error, setError]           = useState<string | null>(null)
+  const [activeItem, setActiveItem] = useState<ContentItem | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -130,24 +131,15 @@ export default function LydbibliotekScreen() {
                   key={item.id}
                   item={item}
                   completed={false}
-                  progress={playingTrack?.id === item.id ? 0 : 0}
-                  onPress={() => {
-                    if (item.type === 'audio' && item.r2_key) {
-                      play({
-                        id:       item.id,
-                        title:    item.title,
-                        abstract: item.abstract,
-                        r2_key:   item.r2_key,
-                        meta:     item.meta,
-                      })
-                    }
-                  }}
+                  progress={0}
+                  onPress={() => setActiveItem(item)}
                 />
               ))}
             </View>
           ))}
         </FadeIn>
       )}
+      <ContentModal item={activeItem} onClose={() => setActiveItem(null)} />
     </ScrollView>
   )
 }

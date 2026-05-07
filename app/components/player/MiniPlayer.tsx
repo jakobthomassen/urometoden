@@ -46,6 +46,10 @@ export default function MiniPlayer() {
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 88,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,

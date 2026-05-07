@@ -16,9 +16,35 @@ Explicit consent (Article 9(2)(a)) is already gated in the app. Still required b
 
 ---
 
-### Mobile — sign-in button stuck in loading state
+### Mobile — unimplemented / incomplete
 
-If the user opens the Google sign-in sheet and dismisses it without completing auth, the login button stays in an infinite loading state. `promptAsync()` resolves with `type: 'dismiss'` but the current `handleGooglePress` sets `loading = true` and only clears it on `response.type === 'error'`. Fix: reset `loading` to `false` when `response?.type === 'dismiss'` (or any non-success type) in the `useEffect` that watches `response`.
+**Reflections screen** (`app/app/reflections/index.tsx`)
+Currently local state only. Wire to the backend: fetch from `/api/me/reflections`, save via POST, delete via DELETE. Add GDPR Article 9 consent gate (already exists on web) before the input is shown.
+
+**Email/password signup and sign-in**
+No email/password auth flow exists yet. Requires: signup form, signin form, password reset, and corresponding backend endpoints. Coordinate with Google OAuth flow so accounts don't collide.
+
+**Lydbibliotek — completion and progress indicators always zero**
+`lydbibliotek.tsx` passes `completed={false}` and `progress={0}` to every ContentCard. It should fetch `/api/me/progress` alongside the content list (as `uke/[id].tsx` already does) and map the results to each card.
+
+**Content completion not tracked**
+- The "Lest" button in `ContentModal.tsx` calls `onClose()` but never POSTs to `/api/me/progress/[itemId]`.
+- Audio end in `PlayerContext.tsx` does not mark the item complete. Add an `onPlaybackStatusUpdate` handler that fires a completion POST when `positionMillis / durationMillis >= 0.95`.
+
+**Audio position not saved**
+`PlayerContext.tsx` does not persist `position_seconds` to the backend. Add a debounced POST to `/api/me/progress/[itemId]` with `{ position_seconds }` on position updates so the user can resume where they left off.
+
+**Week start not recorded**
+Navigating to `/uke/[id]` never calls `/api/me/weeks/[weekId]/start`. The reise screen's `started_at` check will never trigger. Fire the start endpoint on mount in `uke/[id].tsx`.
+
+**Home page — static journey card**
+`hjem.tsx` doesn't fetch progress. The "Din reise" card always says "Fortsett" with no week info. Should fetch `/api/me/progress` and show the active week title and completion count.
+
+**MiniPlayer positioning on stack screens**
+MiniPlayer uses `bottom: 88` (tab bar height) from the root layout, but stack screens like `/uke/[id]` have no tab bar. The player floats too high on those screens. Use `useSegments` or `usePathname` to conditionally apply `bottom: 34` (safe area only) on non-tab routes.
+
+**Sign-in button stuck in loading state** *(may be resolved — verify)*
+Original issue was with `expo-auth-session` which was replaced by the native Google SDK. Confirm the dismiss/cancel case is handled cleanly in the new `auth/signin.tsx`.
 
 ---
 

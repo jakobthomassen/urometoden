@@ -1,5 +1,38 @@
 # Changelog
 
+## 07.05.2026 (continued x4)
+
+React Native / Expo mobile app — full initial build.
+
+**Infrastructure**
+
+EAS Build configured (`eas.json`, `app.json` with `no.urometoden.app` bundle ID, EAS project ID). `expo-av` and `expo-haptics` added as native modules requiring a managed build. `@react-native-google-signin/google-signin` replaces `expo-auth-session` (abandoned after persistent redirect_uri_mismatch and Android client incompatibility with browser-based OAuth). SHA-1 from the EAS keystore registered in Google Cloud Console for the Android OAuth client.
+
+Backend additions for mobile: `POST /api/auth/native` accepts a Google access token, looks up or creates the user, and returns a JWT — same session model as the web OAuth callback. `auth.js` extended to read the session token from a `?token=` query parameter in addition to the cookie and `Authorization` header, so `expo-av` can stream audio without custom request headers.
+
+**Audio player**
+
+`PlayerContext` (React Context + `expo-av`) manages global playback state: current track, position, duration, play/pause/seek, ±15 s skip, fullscreen flag. `MiniPlayer` — a persistent bar above the tab bar showing track title, progress strip, and play/pause button. `FullPlayer` — pageSheet modal with PanResponder drag-to-dismiss, scrubber, ±15 s skip buttons, and haptic feedback. `PlayerProvider` placed at the root layout (not tabs layout) so stack screens outside the tab group share the same player instance. `MiniPlayer` absolutely positioned at `bottom: 88` to float above the tab bar on tab screens and remain visible on stack screens.
+
+**Screens**
+
+- `hjem.tsx` — time-based greeting with user first name, daily tip fetched from `/api/tip`, "Din reise" journey card, and shortcut links to library, reflections, and kurs.
+- `reise.tsx` — 8-week timeline fetching real completion data from `/api/me/progress`; week cards show locked/active/completed states with timeline connector line; taps navigate to `/uke/[id]`.
+- `uke/[id].tsx` — week detail screen; fetches `/api/weeks/[weekId]/content` and `/api/me/progress` on focus; shows completion progress bar, ContentCards with per-item audio progress, ContentModal on tap.
+- `lydbibliotek.tsx` — library with type filter chips (Alle / Lydøkter / Case / Refleksjon / Video), grouped sections, ContentCards, ContentModal. Filters re-fetch on change.
+- `kurs.tsx` — live events from `/api/events` in a horizontal scroll row; event detail modal with type badge, cancelled state, and reveal_pending handling; paginated archive modal (list → drill-in detail → back navigation) matching the web layout; Urofordypning and Uro-skolen sections from `/api/section-cards` with `Linking.openURL` for external links.
+- `profil.tsx` — real user data (name, email, membership badge) and stats from `/api/me/stats` (streak, listen hours, weeks completed); progress card with live completion percentage; gear icon opens a settings modal (pageSheet) with Profil and Innstillinger tabs. Profil tab: avatar initials, field rows, sign out, danger zone with two-step delete account. Innstillinger tab: animated dark/light theme toggle, disabled notification toggles with "kommer snart" note.
+
+**Shared components**
+
+`ContentCard` — type badge, title, abstract, meta, audio progress bar, completion checkmark. `ContentModal` — pageSheet detail view with body text, week chips, "Lytt" button (audio) and "Lest" button (case) wired to PlayerContext. Both components shared between the library and week detail screens.
+
+**TODO**
+
+New mobile section added: reflections screen (local state only, needs API wiring), email/password auth, lydbibliotek completion indicators always zero, content completion not posted to backend, audio position not saved, week start endpoint never called, home page journey card is static, MiniPlayer bottom offset on stack screens.
+
+---
+
 ## 07.05.2026 (continued x3)
 
 Section cards and admin Kalender tab redesign.
@@ -9,6 +42,7 @@ Migration 012 adds `section_cards` table: `section` (fordypning | uroskolen), `i
 `CardIcons.jsx` — shared icon library (16 icons: user, calendar-days, info, layers, heart, book, star, compass, leaf, sun, moon, chat, video, award, music, home). Exports `CardIcon({ name, size })` and `CARD_ICON_KEYS` / `CARD_ICON_LABELS` for the admin icon picker.
 
 New API endpoints:
+
 - `GET /api/section-cards` — auth-required; returns all section cards ordered by section + sort_order
 - `GET /api/admin/section-cards` — admin GET (same query)
 - `POST /api/admin/section-cards` — create card; logs `section_card.created`
@@ -30,6 +64,7 @@ Audit log system. Migration 011 adds a `logs` table (event, tag, actor_id, targe
 `lib/logger.js` — shared `logEvent(env, { event, tag, actorId, targetId, meta })` helper used by all instrumented endpoints.
 
 Events now logged:
+
 - `user.signup` (tag: bruker) — new Google OAuth user, detected pre-upsert in `callback.js`
 - `user.trial_granted` / `user.member_granted` / `user.access_revoked` (tag: tilgang) — admin membership changes in `admin/users/[id].js`
 - `user.admin_promoted` / `user.admin_revoked` (tag: admin) — admin flag changes
@@ -50,6 +85,7 @@ Membership expiry enforcement. Migration 010 adds `has_used_trial INTEGER NOT NU
 `GET /api/auth/me` now lazily expires memberships on every login: if `membership_expires_at` is in the past and `membership != 'none'`, the row is updated to `membership = 'none', membership_expires_at = NULL` before the response is returned. This keeps the DB clean without a cron job.
 
 Admin user management:
+
 - `PATCH /api/admin/users/:id` automatically sets `has_used_trial = 1` whenever `membership = 'trial'` is granted. The field is now included in both the PATCH response and the GET list.
 - `MemberBadge` component checks `membership_expires_at > now` before rendering the coloured trial/member badge — expired users now correctly show "Ingen tilgang" without waiting for a DB cleanup.
 - Admin user rows show a muted "Prøve brukt" badge when `has_used_trial = 1`, giving admins visibility into repeat trial requests.
@@ -73,22 +109,26 @@ Innstillinger panel: working dark/light theme toggle (replaces the toggle that w
 Events system. Migration 009 adds an `events` table (title, event_date ms, type `online|fysisk`, location, link, description, reveal_at, cancelled/cancelled_at, created_at, updated_at).
 
 Public-facing events API (`GET /api/events`, auth required):
+
 - Upcoming mode: events within a 1-hour grace window after their start time; cancelled events remain visible for 3 days or until their planned datetime (whichever is shorter).
 - Archive mode (`?archive=1`): paginated past events with `hasMore` flag.
 - `sanitizeEvent` strips `link` and `location` and sets `reveal_pending: true` when `reveal_at` is still in the future.
 
 Admin events API:
+
 - `GET /api/admin/events` — all events, ordered by date desc.
 - `POST /api/admin/events` — create (validates title, event_date, type).
 - `PATCH /api/admin/events/:id` — update fields or toggle `cancel: true/false`.
 - `DELETE /api/admin/events/:id` — hard delete.
 
 Kurs page rewritten:
+
 - Section order changed to Kurs (events) → Urofordypning → Uro-skolen.
 - Kurs section fetches `/api/events` on mount and renders event cards in a horizontal scroll row (title, type badge, date/time, location if revealed, description truncated to 120 chars). Clicking a card opens a detail modal. Empty state when no upcoming events. "Vis tidligere hendelser" link opens a paginated archive modal (back-button navigation within the modal to event detail).
 - Urofordypning section replaces "Kurs" card with "Fordypningsretreat". Booking modal retained.
 
 Admin "Kalender" tab (new `AdminKalenderTab`):
+
 - Lists all events with status badges (Kommende / Passert / Avlyst).
 - "Ny hendelse" button opens an overlay form (title, datetime-local, type select, location, link, description, reveal_at datetime).
 - Edit opens the same form pre-filled.
@@ -107,6 +147,7 @@ Journey page (`/praksis`): heading changed from "Uroreisen" to "Uropraksis".
 Client-side routing with React Router v6. All main sections now have stable, bookmarkable URLs. `public/_redirects` (`/* /index.html 200`) enables direct URL loads and refresh on Cloudflare Pages without any dashboard changes.
 
 Route map:
+
 - `/` → Dashboard (Hjem)
 - `/praksis` → Journey overview (renamed from Reisen)
 - `/praksis/uke/1–8` → Weekly content
@@ -153,6 +194,7 @@ Onboarding page now uses the `UroLogo` SVG component instead of the "Uro" script
 User progression migrated to D1 (migration 006). Five new tables: `user_progress` (per-item completion, `position_seconds` resume point, `listen_seconds` cumulative), `user_reflections` (reflection text), `user_week_progress` (week start + completion timestamps), `user_state` (active week), `user_login_days` (one row per Oslo date for streak).
 
 New API endpoints under `/api/me/`:
+
 - `GET /api/me/progress` — full progress snapshot (progress map, reflections map, weeks map, active week)
 - `PATCH /api/me/progress/[itemId]` — upsert position/listen/completed; auto-detects week completion server-side
 - `PATCH /api/me/reflections/[itemId]` — saves reflection text, marks item complete, checks week completion
@@ -162,6 +204,7 @@ New API endpoints under `/api/me/`:
 `GET /api/auth/me` now inserts a `user_login_days` row on every request (INSERT OR IGNORE) for streak tracking.
 
 Frontend:
+
 - New `useUserProgress` hook centralises all DB progress state — fetches progress + stats on mount, exposes `startWeek`, `devUnlockWeek`, `updateProgress`, `updateReflection`.
 - `useWeekProgress` rewritten to derive week statuses from DB `started_at`/`completed_at` data instead of localStorage. Week unlock logic (5-day gate, Oslo 10:00) preserved.
 - `App.jsx` wires both hooks; progress props threaded to `HomePage`, `BibliotekPage`, `DashboardPage`.

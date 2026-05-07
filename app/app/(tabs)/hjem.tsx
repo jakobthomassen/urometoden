@@ -1,379 +1,149 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from 'react'
 import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { router } from "expo-router";
-import { useTheme } from "@/components/ui/ThemeContext";
+  ScrollView, View, Text, StyleSheet,
+  TouchableOpacity, Animated,
+} from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { router } from 'expo-router'
+import { useTheme } from '@/components/ui/ThemeContext'
+import { useAuth } from '@/context/AuthContext'
+import { apiFetch } from '@/lib/api'
 
 function getGreeting() {
-  const hour = new Date().getHours();
-
-  if (hour >= 5 && hour < 11) return "God morgen";
-  if (hour >= 11 && hour < 17) return "God dag";
-  if (hour >= 17 && hour < 22) return "God kveld";
-  return "God kveld";
+  const h = new Date().getHours()
+  if (h >= 5 && h < 11) return 'God morgen'
+  if (h >= 11 && h < 17) return 'God dag'
+  return 'God kveld'
 }
 
-function FadeUpSection({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(18)).current;
-
+function FadeUp({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const opacity    = useRef(new Animated.Value(0)).current
+  const translateY = useRef(new Animated.Value(18)).current
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 450,
-        delay,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 450,
-        delay,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [delay, opacity, translateY]);
-
-  return (
-    <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-      {children}
-    </Animated.View>
-  );
+      Animated.timing(opacity,    { toValue: 1, duration: 450, delay, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 450, delay, useNativeDriver: true }),
+    ]).start()
+  }, [])
+  return <Animated.View style={{ opacity, transform: [{ translateY }] }}>{children}</Animated.View>
 }
 
 export default function HjemScreen() {
-  const { colors: Colors } = useTheme();
-  const greeting = getGreeting();
+  const { colors: C }  = useTheme()
+  const { user, token } = useAuth()
+  const [tip, setTip]   = useState<string | null>(null)
+
+  const firstName = user?.name?.split(' ')[0] ?? ''
+
+  useEffect(() => {
+    apiFetch('/api/tip', {}, token)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.body) setTip(data.body) })
+      .catch(() => {})
+  }, [token])
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: Colors.background }]}
+      style={[styles.container, { backgroundColor: C.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <FadeUpSection delay={0}>
-        <Text style={[styles.greeting, { color: Colors.text }]}>{greeting}</Text>
-        <Text style={[styles.subtitle, { color: Colors.mutedText }]}>
+      <FadeUp delay={0}>
+        <Text style={[styles.greeting, { color: C.text }]}>
+          {getGreeting()}{firstName ? `, ${firstName}` : ''}
+        </Text>
+        <Text style={[styles.subtitle, { color: C.mutedText }]}>
           Hva trenger du i dag?
         </Text>
-      </FadeUpSection>
+      </FadeUp>
 
-      <FadeUpSection delay={100}>
+      <FadeUp delay={100}>
         <TouchableOpacity
-          style={[
-            styles.journeyCard,
-            { backgroundColor: Colors.primary, borderColor: Colors.primarySoft },
-          ]}
+          style={[styles.journeyCard, { backgroundColor: C.primary, borderColor: C.primarySoft }]}
           activeOpacity={0.9}
-          onPress={() => router.push("/(tabs)/reise")}
+          onPress={() => router.push('/(tabs)/reise')}
         >
           <View style={styles.cardTopRow}>
-            <Text style={[styles.eyebrow, { color: Colors.white }]}>
-              Uropraksis
-            </Text>
-
+            <Text style={[styles.eyebrow, { color: C.white }]}>Uropraksis</Text>
             <View style={styles.circleButton}>
-              <Ionicons name="arrow-forward" size={22} color={Colors.white} />
+              <Ionicons name="arrow-forward" size={22} color={C.white} />
             </View>
           </View>
-
-          <Text style={[styles.cardTitle, { color: Colors.white }]}>
-            Uke 1 - Møt uroen
+          <Text style={[styles.cardTitle, { color: C.white }]}>Din reise</Text>
+          <Text style={[styles.cardDescription, { color: C.white }]}>
+            Fortsett der du slapp, i ditt eget tempo.
           </Text>
-
-          <Text style={[styles.cardDescription, { color: Colors.white }]}>
-            Du er klar til å starte reisen i ditt eget tempo.
-          </Text>
-
           <TouchableOpacity
-            style={[
-              styles.startButton,
-              { backgroundColor: "rgba(255,255,255,0.16)" },
-            ]}
+            style={[styles.startButton, { backgroundColor: 'rgba(255,255,255,0.16)' }]}
             activeOpacity={0.9}
-            onPress={() => router.push("/(tabs)/reise")}
+            onPress={() => router.push('/(tabs)/reise')}
           >
-            <Text style={[styles.startButtonText, { color: Colors.white }]}>
-              Start reisen
-            </Text>
+            <Text style={[styles.startButtonText, { color: C.white }]}>Fortsett</Text>
           </TouchableOpacity>
         </TouchableOpacity>
-      </FadeUpSection>
+      </FadeUp>
 
-      <FadeUpSection delay={180}>
-        <View
-          style={[
-            styles.thoughtCard,
-            {
-              backgroundColor: Colors.card,
-              borderColor: Colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.thoughtEyebrow, { color: Colors.primary }]}>
-            DAGENS TANKE
-          </Text>
-
-          <Text style={[styles.thoughtText, { color: Colors.mutedText }]}>
-            Sinnet lager historier. Kroppen kjenner sannheten. Begge har noe å si.
+      <FadeUp delay={180}>
+        <View style={[styles.tipCard, { backgroundColor: C.card, borderColor: C.border }]}>
+          <Text style={[styles.tipEyebrow, { color: C.primary }]}>DAGENS TANKE</Text>
+          <Text style={[styles.tipText, { color: C.mutedText }]}>
+            {tip ?? '…'}
           </Text>
         </View>
-      </FadeUpSection>
+      </FadeUp>
 
-      <FadeUpSection delay={240}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: Colors.text }]}>
-            Snarveier
-          </Text>
-        </View>
-      </FadeUpSection>
+      <FadeUp delay={240}>
+        <Text style={[styles.sectionTitle, { color: C.text }]}>Snarveier</Text>
+      </FadeUp>
 
-      <FadeUpSection delay={300}>
-        <TouchableOpacity
-          style={[
-            styles.linkCard,
-            { backgroundColor: Colors.card, borderColor: Colors.border },
-          ]}
-          activeOpacity={0.9}
-          onPress={() => router.push("/(tabs)/lydbibliotek")}
-        >
-          <View style={styles.linkLeft}>
-            <View
-              style={[styles.linkIconBox, { backgroundColor: Colors.background }]}
-            >
-              <Ionicons name="headset-outline" size={24} color={Colors.primary} />
+      {[
+        { icon: 'headset-outline',  title: 'Lydbibliotek', sub: 'Utforsk lydøkter i eget tempo',   href: '/(tabs)/lydbibliotek' },
+        { icon: 'create-outline',   title: 'Refleksjon',   sub: 'Skriv ned det du legger merke til', href: '/reflections' },
+        { icon: 'school-outline',   title: 'Uro-skolen',   sub: 'Kunnskap og historier',             href: '/(tabs)/kurs' },
+      ].map((item, i) => (
+        <FadeUp key={item.href} delay={300 + i * 60}>
+          <TouchableOpacity
+            style={[styles.linkCard, { backgroundColor: C.card, borderColor: C.border }]}
+            activeOpacity={0.9}
+            onPress={() => router.push(item.href as any)}
+          >
+            <View style={styles.linkLeft}>
+              <View style={[styles.linkIconBox, { backgroundColor: C.background }]}>
+                <Ionicons name={item.icon as any} size={24} color={C.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.linkTitle, { color: C.text }]}>{item.title}</Text>
+                <Text style={[styles.linkSubtitle, { color: C.mutedText }]}>{item.sub}</Text>
+              </View>
             </View>
-
-            <View>
-              <Text style={[styles.linkTitle, { color: Colors.text }]}>
-                Lydbibliotek
-              </Text>
-              <Text style={[styles.linkSubtitle, { color: Colors.mutedText }]}>
-                Utforsk lydøkter i eget tempo
-              </Text>
-            </View>
-          </View>
-
-          <Ionicons name="chevron-forward" size={24} color={Colors.mutedText} />
-        </TouchableOpacity>
-      </FadeUpSection>
-
-      <FadeUpSection delay={360}>
-        <TouchableOpacity
-          style={[
-            styles.linkCard,
-            { backgroundColor: Colors.card, borderColor: Colors.border },
-          ]}
-          activeOpacity={0.9}
-          onPress={() => router.push("/reflections")}
-        >
-          <View style={styles.linkLeft}>
-            <View
-              style={[styles.linkIconBox, { backgroundColor: Colors.background }]}
-            >
-              <Ionicons name="create-outline" size={24} color={Colors.primary} />
-            </View>
-
-            <View>
-              <Text style={[styles.linkTitle, { color: Colors.text }]}>
-                Refleksjon
-              </Text>
-              <Text style={[styles.linkSubtitle, { color: Colors.mutedText }]}>
-                Skriv ned det du legger merke til
-              </Text>
-            </View>
-          </View>
-
-          <Ionicons name="chevron-forward" size={24} color={Colors.mutedText} />
-        </TouchableOpacity>
-      </FadeUpSection>
-
-      <FadeUpSection delay={420}>
-        <TouchableOpacity
-          style={[
-            styles.linkCard,
-            { backgroundColor: Colors.card, borderColor: Colors.border },
-          ]}
-          activeOpacity={0.9}
-          onPress={() => router.push("/(tabs)/kurs")}
-        >
-          <View style={styles.linkLeft}>
-            <View
-              style={[styles.linkIconBox, { backgroundColor: Colors.background }]}
-            >
-              <Ionicons name="school-outline" size={24} color={Colors.primary} />
-            </View>
-
-            <View>
-              <Text style={[styles.linkTitle, { color: Colors.text }]}>
-                Uro-skolen
-              </Text>
-              <Text style={[styles.linkSubtitle, { color: Colors.mutedText }]}>
-                Kunnskap og historier
-              </Text>
-            </View>
-          </View>
-
-          <Ionicons name="chevron-forward" size={24} color={Colors.mutedText} />
-        </TouchableOpacity>
-      </FadeUpSection>
+            <Ionicons name="chevron-forward" size={24} color={C.mutedText} />
+          </TouchableOpacity>
+        </FadeUp>
+      ))}
     </ScrollView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 72,
-    paddingBottom: 120,
-  },
-
-  greeting: {
-    fontSize: 36,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-
-  subtitle: {
-    fontSize: 17,
-    marginBottom: 24,
-  },
-
-  journeyCard: {
-    borderRadius: 28,
-    padding: 22,
-    marginBottom: 18,
-    borderWidth: 1,
-  },
-
-  cardTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-
-  circleButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 999,
-    borderWidth: 4,
-    borderColor: "rgba(255,255,255,0.14)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  cardTitle: {
-    fontSize: 30,
-    fontWeight: "700",
-    marginBottom: 10,
-    maxWidth: "85%",
-  },
-
-  cardDescription: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 18,
-    maxWidth: "90%",
-  },
-
-  startButton: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 14,
-  },
-
-  startButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-
-  thoughtCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 18,
-    marginBottom: 24,
-  },
-
-  thoughtEyebrow: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-
-  thoughtText: {
-    fontSize: 16,
-    lineHeight: 25,
-    fontStyle: "italic",
-  },
-
-  sectionHeader: {
-    marginBottom: 12,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-
-  linkCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  linkLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    flex: 1,
-  },
-
-  linkIconBox: {
-    width: 58,
-    height: 58,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  linkTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-
-  linkSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});
+  container:        { flex: 1 },
+  content:          { paddingHorizontal: 24, paddingTop: 72, paddingBottom: 120 },
+  greeting:         { fontSize: 36, fontWeight: '700', marginBottom: 6 },
+  subtitle:         { fontSize: 17, marginBottom: 24 },
+  journeyCard:      { borderRadius: 28, padding: 22, marginBottom: 18, borderWidth: 1 },
+  cardTopRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+  eyebrow:          { fontSize: 12, fontWeight: '700', letterSpacing: 1 },
+  circleButton:     { width: 56, height: 56, borderRadius: 999, borderWidth: 4, borderColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  cardTitle:        { fontSize: 30, fontWeight: '700', marginBottom: 10, maxWidth: '85%' },
+  cardDescription:  { fontSize: 16, lineHeight: 24, marginBottom: 18, maxWidth: '90%' },
+  startButton:      { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14 },
+  startButtonText:  { fontSize: 15, fontWeight: '700' },
+  tipCard:          { borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 24 },
+  tipEyebrow:       { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
+  tipText:          { fontSize: 16, lineHeight: 25, fontStyle: 'italic' },
+  sectionTitle:     { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  linkCard:         { borderRadius: 20, borderWidth: 1, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  linkLeft:         { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
+  linkIconBox:      { width: 58, height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  linkTitle:        { fontSize: 17, fontWeight: '700', marginBottom: 4 },
+  linkSubtitle:     { fontSize: 14, lineHeight: 20 },
+})
