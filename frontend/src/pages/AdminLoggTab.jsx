@@ -105,30 +105,29 @@ function LogRow({ log }) {
 
 // ─── Tab ─────────────────────────────────────────────────────────────────────
 
+const PER_PAGE = 50
+
 export default function AdminLoggTab() {
   const [activeTag, setActiveTag] = useState('all')
   const [logs, setLogs]           = useState([])
   const [total, setTotal]         = useState(0)
   const [page, setPage]           = useState(1)
-  const [hasMore, setHasMore]     = useState(false)
   const [loading, setLoading]     = useState(false)
 
-  const fetchLogs = useCallback(async (tag, p, append = false) => {
+  const fetchLogs = useCallback(async (tag, p) => {
     setLoading(true)
-    const params = new URLSearchParams({ tag, page: p, per_page: 50 })
+    const params = new URLSearchParams({ tag, page: p, per_page: PER_PAGE })
     const res    = await fetch(`/api/admin/logs?${params}`)
     const data   = await res.json()
-    setLogs(prev => append ? [...prev, ...data.results] : data.results)
+    setLogs(data.results)
     setTotal(data.total)
-    setHasMore(data.hasMore)
     setPage(p)
     setLoading(false)
   }, [])
 
-  // Reload from page 1 whenever the tag filter changes
   useEffect(() => {
-    setLogs([])
-    fetchLogs(activeTag, 1, false)
+    setPage(1)
+    fetchLogs(activeTag, 1)
   }, [activeTag, fetchLogs])
 
   function handleTagChange(tag) {
@@ -136,9 +135,13 @@ export default function AdminLoggTab() {
     setActiveTag(tag)
   }
 
-  function loadMore() {
-    fetchLogs(activeTag, page + 1, true)
+  function goToPage(p) {
+    fetchLogs(activeTag, p)
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
+  const countFrom  = total === 0 ? 0 : (page - 1) * PER_PAGE + 1
+  const countTo    = Math.min(page * PER_PAGE, total)
 
   return (
     <div className={styles.loggTab}>
@@ -160,7 +163,7 @@ export default function AdminLoggTab() {
         )}
       </div>
 
-      {loading && logs.length === 0 ? (
+      {loading ? (
         <div className={styles.empty}>Laster…</div>
       ) : logs.length === 0 ? (
         <div className={styles.empty}>Ingen loggoppføringer ennå.</div>
@@ -170,10 +173,23 @@ export default function AdminLoggTab() {
         </div>
       )}
 
-      {hasMore && (
-        <button className={styles.loggLoadMore} onClick={loadMore} disabled={loading}>
-          {loading ? 'Laster…' : 'Vis mer'}
-        </button>
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <span className={styles.pageInfo}>{countFrom}–{countTo} av {total}</span>
+          <div className={styles.pageControls}>
+            <button className={styles.pageBtn} onClick={() => goToPage(page - 1)} disabled={page === 1}>←</button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+                onClick={() => goToPage(p)}
+              >
+                {p}
+              </button>
+            ))}
+            <button className={styles.pageBtn} onClick={() => goToPage(page + 1)} disabled={page === totalPages}>→</button>
+          </div>
+        </div>
       )}
 
     </div>

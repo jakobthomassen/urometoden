@@ -32,15 +32,12 @@ export async function onRequestGet({ request, env }) {
       ${where}
       ORDER BY l.created_at DESC
       LIMIT ? OFFSET ?
-    `).bind(...whereBinds, perPage + 1, offset).all(),
+    `).bind(...whereBinds, perPage, offset).all(),
   ])
 
-  const hasMore = results.length > perPage
-
   return Response.json({
-    results:  results.slice(0, perPage),
-    total:    countRow?.n ?? 0,
+    results: results,
+    total:   countRow?.n ?? 0,
     page,
-    hasMore,
   })
 }
