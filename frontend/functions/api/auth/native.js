@@ -1,5 +1,5 @@
-import { signJwt } from '../../../lib/jwt.js'
-import { logEvent } from '../../../lib/logger.js'
+import { signJwt } from '../../lib/jwt.js'
+import { logEvent } from '../../lib/logger.js'
 
 const SESSION_90_DAYS = 60 * 60 * 24 * 90
 
