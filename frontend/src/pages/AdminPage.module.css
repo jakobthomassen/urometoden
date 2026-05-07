@@ -1116,9 +1116,14 @@
   transition: border-color 0.14s, color 0.14s;
 }
 
-.kalenderAddCard:hover {
+.kalenderAddCard:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.kalenderAddCard:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .kalenderAddCardPlus {
