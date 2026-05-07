@@ -34,17 +34,12 @@ export default function SignInScreen() {
     setLoading(true)
     try {
       await GoogleSignin.hasPlayServices()
-      const signInResult = await GoogleSignin.signIn()
-      console.log('signIn result:', JSON.stringify(signInResult))
-      const tokens = await GoogleSignin.getTokens()
-      console.log('tokens:', JSON.stringify(tokens))
-      const { accessToken } = tokens
+      await GoogleSignin.signIn()
+      const { accessToken } = await GoogleSignin.getTokens()
       if (!accessToken) throw new Error('No access token')
       await auth.signIn(accessToken)
     } catch (err: any) {
-      console.log('Google sign-in error code:', err.code)
-      console.log('Google sign-in error:', JSON.stringify(err))
-      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+if (err.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled
       } else {
         setError('Google-innlogging feilet. Prøv igjen.')

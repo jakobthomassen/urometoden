@@ -1,4 +1,4 @@
-const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://urometoden.pages.dev'
+export const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://urometoden.pages.dev'
 
 export async function apiFetch(
   path: string,
