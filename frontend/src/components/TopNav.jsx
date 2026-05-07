@@ -42,11 +42,9 @@ function MoonIcon() {
   )
 }
 
-const MENU_ITEMS = [
-  { label: 'Profil',         disabled: true  },
-  { label: 'Innstillinger',  disabled: true  },
-  { label: 'Personvern',     disabled: false, page: 'Hjelp', section: 'personvern' },
-  { label: 'Hjelp og støtte', disabled: false, page: 'Hjelp', section: 'hjelp' },
+const NAV_MENU_ITEMS = [
+  { label: 'Personvern',      page: 'Hjelp', section: 'personvern' },
+  { label: 'Hjelp og støtte', page: 'Hjelp', section: 'hjelp'      },
 ]
 
 function resetLocalStorage() {
@@ -62,7 +60,7 @@ function getInitials(name) {
   return name.split(' ').slice(0, 2).map(n => n[0].toUpperCase()).join('')
 }
 
-function ProfileMenu({ user, onClose, onLogout, onNavigate }) {
+function ProfileMenu({ user, onClose, onLogout, onNavigate, onOpenSettings }) {
   const [resetDone, setResetDone] = useState(false)
 
   function handleReset() {
@@ -83,12 +81,20 @@ function ProfileMenu({ user, onClose, onLogout, onNavigate }) {
 
       <div className={styles.menuDivider} />
 
-      {MENU_ITEMS.map(item => (
+      <button className={styles.menuItemActive} onClick={() => { onClose(); onOpenSettings('profil') }}>
+        Profil
+      </button>
+      <button className={styles.menuItemActive} onClick={() => { onClose(); onOpenSettings('innstillinger') }}>
+        Innstillinger
+      </button>
+
+      <div className={styles.menuDivider} />
+
+      {NAV_MENU_ITEMS.map(item => (
         <button
           key={item.label}
-          className={item.disabled ? styles.menuItem : styles.menuItemActive}
-          disabled={item.disabled}
-          onClick={item.disabled ? undefined : () => { onClose(); onNavigate(item.page, item.section) }}
+          className={styles.menuItemActive}
+          onClick={() => { onClose(); onNavigate(item.page, item.section) }}
         >
           {item.label}
         </button>
@@ -137,7 +143,7 @@ function useMembershipLabel(user) {
   return { label, type }
 }
 
-export default function TopNav({ isDark, onToggleTheme, onNavigate, user, onLogout, memberAccess }) {
+export default function TopNav({ isDark, onToggleTheme, onNavigate, user, onLogout, memberAccess, onOpenSettings }) {
   const [menuOpen, setMenuOpen]     = useState(false)
   const menuRef                     = useRef(null)
   const location                    = useLocation()
@@ -209,6 +215,7 @@ export default function TopNav({ isDark, onToggleTheme, onNavigate, user, onLogo
               onClose={() => setMenuOpen(false)}
               onLogout={onLogout}
               onNavigate={onNavigate}
+              onOpenSettings={onOpenSettings}
             />
           )}
         </div>
