@@ -2,9 +2,15 @@
   "expo": {
     "name": "uro-portalen-app",
     "slug": "uro-portalen-app",
+    "owner": "jakobt",
+    "extra": {
+      "eas": {
+        "projectId": "d5f0b3be-2f64-435e-8483-556f0b0edfbb"
+      }
+    },
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "uroportalenapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,24 +21,22 @@
     "android": {
       "package": "no.urometoden.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -41,7 +45,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.1058838331538-pud8m9e412uhe4adtf7kac4iknk8pvg9"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

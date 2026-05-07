@@ -6,13 +6,21 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native'
-import * as Google from 'expo-auth-session/providers/google'
-import * as WebBrowser from 'expo-web-browser'
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 
-WebBrowser.maybeCompleteAuthSession()
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+  scopes: [
+    'https://www.googleapis.com/auth/userinfo.profile',
+    'https://www.googleapis.com/auth/userinfo.email',
+  ],
+})
 
 export default function SignInScreen() {
   const { colors: Colors } = useTheme()
@@ -21,36 +29,28 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId:     process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    webClientId:     process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
-  })
-
-  useEffect(() => {
-    if (response?.type === 'success' && response.authentication?.accessToken) {
-      handleGoogleToken(response.authentication.accessToken)
-    } else if (response?.type === 'error') {
-      setError('Google-innlogging feilet. Prøv igjen.')
-      setLoading(false)
-    }
-  }, [response])
-
-  async function handleGoogleToken(accessToken: string) {
-    setLoading(true)
+  async function handleGooglePress() {
     setError(null)
+    setLoading(true)
     try {
+      await GoogleSignin.hasPlayServices()
+      const signInResult = await GoogleSignin.signIn()
+      console.log('signIn result:', JSON.stringify(signInResult))
+      const tokens = await GoogleSignin.getTokens()
+      console.log('tokens:', JSON.stringify(tokens))
+      const { accessToken } = tokens
+      if (!accessToken) throw new Error('No access token')
       await auth.signIn(accessToken)
-    } catch {
-      setError('Kunne ikke logge inn. Sjekk nettilkoblingen og prøv igjen.')
+    } catch (err: any) {
+      console.log('Google sign-in error code:', err.code)
+      console.log('Google sign-in error:', JSON.stringify(err))
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+        // user cancelled
+      } else {
+        setError('Google-innlogging feilet. Prøv igjen.')
+      }
       setLoading(false)
     }
-  }
-
-  function handleGooglePress() {
-    setError(null)
-    setLoading(true)
-    promptAsync()
   }
 
   return (
@@ -64,12 +64,12 @@ export default function SignInScreen() {
         <View style={styles.socials}>
           <Pressable
             onPress={handleGooglePress}
-            disabled={!request || loading}
+            disabled={loading}
             style={({ pressed }) => [
               styles.socialButton,
               { borderColor: Colors.border, backgroundColor: Colors.card },
               pressed && styles.socialButtonPressed,
-              (!request || loading) && styles.socialButtonDisabled,
+              loading && styles.socialButtonDisabled,
             ]}
           >
             {loading ? (

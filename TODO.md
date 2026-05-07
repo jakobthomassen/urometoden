@@ -16,6 +16,20 @@ Explicit consent (Article 9(2)(a)) is already gated in the app. Still required b
 
 ---
 
+### Mobile — sign-in button stuck in loading state
+
+If the user opens the Google sign-in sheet and dismisses it without completing auth, the login button stays in an infinite loading state. `promptAsync()` resolves with `type: 'dismiss'` but the current `handleGooglePress` sets `loading = true` and only clears it on `response.type === 'error'`. Fix: reset `loading` to `false` when `response?.type === 'dismiss'` (or any non-success type) in the `useEffect` that watches `response`.
+
+---
+
+### Env var naming cleanup
+
+Before handoff to client, rename env vars to consistent conventions:
+- `EXPO_PUBLIC_GOOGLE_CLIENT_ID` → `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (currently named after web's `GOOGLE_CLIENT_ID`)
+- Align Cloudflare worker secrets and `.env.local` keys so naming reflects purpose, not history
+
+---
+
 ### Multi-provider auth — Apple Sign-In & account linking
 
 Schema is ready (`identities` table). Coordinate with the app team before they implement Apple Sign-In.
