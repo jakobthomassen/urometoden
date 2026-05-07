@@ -2,7 +2,8 @@ import { verifyJwt, parseCookies } from './jwt.js'
 
 export async function getSession(request, env) {
   const cookies = parseCookies(request.headers.get('Cookie') || '')
-  const token   = cookies.session
+  const auth    = request.headers.get('Authorization') ?? ''
+  const token   = cookies.session || (auth.startsWith('Bearer ') ? auth.slice(7) : null)
   if (!token) return null
   const payload = await verifyJwt(token, env.AUTH_SECRET)
   if (!payload) return null
