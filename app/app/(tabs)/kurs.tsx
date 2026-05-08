@@ -208,6 +208,7 @@ export default function KursScreen() {
   const [cards, setCards]             = useState<SectionCard[]>([])
   const [loadingEvents, setLoading]   = useState(true)
   const [selectedEvent, setSelected]  = useState<Event | null>(null)
+  const [selectedCard, setSelectedCard] = useState<SectionCard | null>(null)
   const [showArchive, setShowArchive] = useState(false)
 
   useFocusEffect(useCallback(() => {
@@ -312,8 +313,8 @@ export default function KursScreen() {
               {fordypning.map(card => (
                 <TouchableOpacity
                   key={card.id}
-                  activeOpacity={card.link ? 0.9 : 1}
-                  onPress={() => card.link && Linking.openURL(card.link)}
+                  activeOpacity={0.9}
+                  onPress={() => setSelectedCard(card)}
                   style={[styles.bigCard, { backgroundColor: C.card, borderColor: C.border }]}
                 >
                   <View style={[styles.iconBox, { backgroundColor: C.background }]}>
@@ -362,6 +363,48 @@ export default function KursScreen() {
           </>
         )}
       </ScrollView>
+
+      <Modal visible={!!selectedCard} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: C.card }]}>
+            <TouchableOpacity
+              style={[styles.closeButton, { borderColor: C.border }]}
+              onPress={() => setSelectedCard(null)}
+            >
+              <Ionicons name="close" size={22} color={C.mutedText} />
+            </TouchableOpacity>
+
+            {selectedCard && (
+              <>
+                <View style={cardModalStyles.titleRow}>
+                  <View style={[styles.iconBox, { backgroundColor: C.background, marginBottom: 0 }]}>
+                    <Ionicons name={getIcon(selectedCard.icon) as any} size={24} color={C.text} />
+                  </View>
+                  <Text style={[cardModalStyles.title, { color: C.text }]}>{selectedCard.title}</Text>
+                </View>
+
+                {selectedCard.description ? (
+                  <Text style={[cardModalStyles.description, { color: C.mutedText }]}>
+                    {selectedCard.description}
+                  </Text>
+                ) : null}
+
+                {selectedCard.link ? (
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: C.background, borderColor: C.border, marginTop: 8 }]}
+                    onPress={() => { setSelectedCard(null); Linking.openURL(selectedCard.link!) }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.modalButtonText, { color: C.text }]}>
+                      {selectedCard.link_label || 'Les mer'} →
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={!!selectedEvent} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
@@ -463,4 +506,10 @@ const styles = StyleSheet.create({
   modalDescription: { fontSize: 16, lineHeight: 24, marginVertical: 18 },
   modalButton:      { borderRadius: 14, borderWidth: 1, minHeight: 54, alignItems: 'center', justifyContent: 'center' },
   modalButtonText:  { fontSize: 16, fontWeight: '700' },
+})
+
+const cardModalStyles = StyleSheet.create({
+  titleRow:    { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16, paddingRight: 32 },
+  title:       { fontSize: 20, fontWeight: '700', flex: 1, flexWrap: 'wrap' },
+  description: { fontSize: 15, lineHeight: 24, marginBottom: 8 },
 })

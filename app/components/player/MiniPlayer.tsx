@@ -1,14 +1,21 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Haptics from 'expo-haptics'
+import { useSegments } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { usePlayer } from '@/context/PlayerContext'
 
 export default function MiniPlayer() {
   const { colors: C } = useTheme()
   const { track, isPlaying, position, duration, pause, resume, setFullscreen } = usePlayer()
+  const segments = useSegments()
+  const insets   = useSafeAreaInsets()
 
   if (!track) return null
+
+  const inTabs   = segments[0] === '(tabs)'
+  const bottom   = inTabs ? 88 : insets.bottom + 8
 
   const progress = duration > 0 ? position / duration : 0
 
@@ -20,7 +27,7 @@ export default function MiniPlayer() {
   return (
     <Pressable
       onPress={() => setFullscreen(true)}
-      style={[styles.container, { backgroundColor: C.card, borderTopColor: C.border }]}
+      style={[styles.container, { backgroundColor: C.card, borderTopColor: C.border, bottom }]}
     >
       <View style={[styles.dot, { backgroundColor: C.primary }]} />
 
@@ -49,7 +56,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 88,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,

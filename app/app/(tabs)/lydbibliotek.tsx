@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator, Animated,
@@ -54,28 +55,34 @@ export default function LydbibliotekScreen() {
   const { token }        = useAuth()
 
 
+  type ProgressItem = { completed_at: number | null; position_seconds: number | null }
+
   const [filter, setFilter]         = useState('all')
   const [sections, setSections]     = useState<{ type: string; label: string; items: ContentItem[] }[]>([])
+  const [progress, setProgress]     = useState<Record<string, ProgressItem>>({})
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState<string | null>(null)
   const [activeItem, setActiveItem] = useState<ContentItem | null>(null)
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     setLoading(true)
     setError(null)
     const url = filter === 'all' ? '/api/content' : `/api/content?type=${filter}`
-    apiFetch(url, {}, token)
-      .then(r => r.json())
-      .then((items: ContentItem[]) => {
+    Promise.all([
+      apiFetch(url, {}, token).then(r => r.json()),
+      apiFetch('/api/me/progress', {}, token).then(r => r.ok ? r.json() : null),
+    ])
+      .then(([items, progressData]: [ContentItem[], any]) => {
         setSections(
           filter === 'all'
             ? groupByType(items)
             : [{ type: filter, label: SECTION_LABELS[filter] ?? filter, items }]
         )
+        setProgress(progressData?.progress ?? {})
       })
       .catch(() => setError('Kunne ikke laste innhold.'))
       .finally(() => setLoading(false))
-  }, [filter, token])
+  }, [filter, token]))
 
   return (
     <ScrollView
@@ -126,20 +133,39 @@ export default function LydbibliotekScreen() {
                   {section.label}
                 </Text>
               )}
-              {section.items.map(item => (
-                <ContentCard
-                  key={item.id}
-                  item={item}
-                  completed={false}
-                  progress={0}
-                  onPress={() => setActiveItem(item)}
-                />
-              ))}
+              {section.items.map(item => {
+                const p         = progress[item.id]
+                const completed = !!p?.completed_at
+                const dur       = item.meta ? (() => {
+                  const mh = item.meta.match(/(\d+)m\s*(\d+)s/)
+                  if (mh) return parseInt(mh[1]) * 60 + parseInt(mh[2])
+                  const mm = item.meta.match(/(\d+)m/)
+                  if (mm) return parseInt(mm[1]) * 60
+                  return 0
+                })() : 0
+                const prog = dur > 0 && p?.position_seconds ? p.position_seconds / dur : 0
+                return (
+                  <ContentCard
+                    key={item.id}
+                    item={item}
+                    completed={completed}
+                    progress={prog}
+                    onPress={() => setActiveItem(item)}
+                  />
+                )
+              })}
             </View>
           ))}
         </FadeIn>
       )}
-      <ContentModal item={activeItem} onClose={() => setActiveItem(null)} />
+      <ContentModal
+        item={activeItem}
+        onClose={() => setActiveItem(null)}
+        onComplete={id => setProgress(prev => ({
+          ...prev,
+          [id]: { ...prev[id], completed_at: Date.now() },
+        }))}
+      />
     </ScrollView>
   )
 }

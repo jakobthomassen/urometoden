@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
 import {
   ScrollView, View, Text, StyleSheet,
   TouchableOpacity, Animated,
@@ -28,10 +29,18 @@ function FadeUp({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   return <Animated.View style={{ opacity, transform: [{ translateY }] }}>{children}</Animated.View>
 }
 
+const WEEK_TITLES: Record<number, string> = {
+  1: 'Møt uroen', 2: 'Reaktivitet', 3: 'Pust og ro', 4: 'Kroppen vet',
+  5: 'Mønstre',   6: 'Ressursen',   7: 'Integrasjon', 8: 'Veien videre',
+}
+
 export default function HjemScreen() {
   const { colors: C }  = useTheme()
   const { user, token } = useAuth()
   const [tip, setTip]   = useState<string | null>(null)
+  const [activeWeek,    setActiveWeek]    = useState<number>(1)
+  const [weeksDone,     setWeeksDone]     = useState<number>(0)
+  const [progressReady, setProgressReady] = useState(false)
 
   const firstName = user?.name?.split(' ')[0] ?? ''
 
@@ -41,6 +50,18 @@ export default function HjemScreen() {
       .then(data => { if (data?.body) setTip(data.body) })
       .catch(() => {})
   }, [token])
+
+  useFocusEffect(useCallback(() => {
+    apiFetch('/api/me/progress', {}, token)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        setActiveWeek(data.active_week ?? 1)
+        setWeeksDone(Object.values(data.weeks ?? {}).filter((w: any) => w.completed_at).length)
+        setProgressReady(true)
+      })
+      .catch(() => {})
+  }, [token]))
 
   return (
     <ScrollView
@@ -70,13 +91,20 @@ export default function HjemScreen() {
             </View>
           </View>
           <Text style={[styles.cardTitle, { color: C.white }]}>Din reise</Text>
-          <Text style={[styles.cardDescription, { color: C.white }]}>
-            Fortsett der du slapp, i ditt eget tempo.
-          </Text>
+          {progressReady ? (
+            <Text style={[styles.cardDescription, { color: C.white }]}>
+              Uke {activeWeek} · {WEEK_TITLES[activeWeek] ?? ''}
+              {'\n'}{weeksDone} av 8 uker fullført
+            </Text>
+          ) : (
+            <Text style={[styles.cardDescription, { color: C.white }]}>
+              Fortsett der du slapp, i ditt eget tempo.
+            </Text>
+          )}
           <TouchableOpacity
             style={[styles.startButton, { backgroundColor: 'rgba(255,255,255,0.16)' }]}
             activeOpacity={0.9}
-            onPress={() => router.push('/(tabs)/reise')}
+            onPress={() => router.push(progressReady ? `/uke/${activeWeek}` as any : '/(tabs)/reise')}
           >
             <Text style={[styles.startButtonText, { color: C.white }]}>Fortsett</Text>
           </TouchableOpacity>

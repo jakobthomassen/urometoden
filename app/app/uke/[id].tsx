@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet,
   Pressable, ActivityIndicator,
@@ -43,9 +43,14 @@ export default function UkeScreen() {
   const [progress, setProgress]   = useState<Record<number, ProgressItem>>({})
   const [loading, setLoading]     = useState(true)
   const [activeItem, setActive]   = useState<ContentItem | null>(null)
+  const startedRef                = useRef(false)
 
   useFocusEffect(useCallback(() => {
     setLoading(true)
+    if (!startedRef.current) {
+      startedRef.current = true
+      apiFetch(`/api/me/weeks/${weekId}/start`, { method: 'POST' }, token).catch(() => {})
+    }
     Promise.all([
       apiFetch(`/api/weeks/${weekId}/content`, {}, token).then(r => r.ok ? r.json() : []),
       apiFetch('/api/me/progress', {}, token).then(r => r.ok ? r.json() : null),
@@ -125,7 +130,14 @@ export default function UkeScreen() {
         </ScrollView>
       )}
 
-      <ContentModal item={activeItem} onClose={() => setActive(null)} />
+      <ContentModal
+        item={activeItem}
+        onClose={() => setActive(null)}
+        onComplete={id => setProgress(prev => ({
+          ...prev,
+          [id]: { ...prev[id], completed_at: Date.now(), position_seconds: prev[id]?.position_seconds ?? null, listen_seconds: prev[id]?.listen_seconds ?? null },
+        }))}
+      />
     </View>
   )
 }

@@ -14,6 +14,7 @@ import { onboardingSlides } from "@/constants/onboardingData";
 import AccordionCard from "@/components/onboarding/AccordionCard";
 import AudioPreviewCard from "@/components/onboarding/AudioPreviewCard";
 import { useTheme } from "@/components/ui/ThemeContext";
+import UroLogo from "@/components/ui/UroLogo";
 
 const { width } = Dimensions.get("window");
 
@@ -50,9 +51,7 @@ export default function Onboarding() {
     if (slide.type === "hero") {
       return (
         <View style={styles.heroContent}>
-          <Text style={[styles.heroTitle, { color: Colors.text }]}>
-            {slide.title}
-          </Text>
+          <UroLogo width={180} />
           <Text style={[styles.heroSubtitle, { color: Colors.mutedText }]}>
             {slide.subtitle}
           </Text>
@@ -152,12 +151,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingBottom: 80,
-  },
-
-  heroTitle: {
-    fontSize: 56,
-    fontWeight: "700",
-    marginBottom: 14,
   },
 
   heroSubtitle: {

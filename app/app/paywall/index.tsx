@@ -19,7 +19,7 @@ export default function Paywall() {
       {/* Badge */}
       <View style={[styles.badge, { backgroundColor: Colors.card }]}>
         <Text style={[styles.badgeText, { color: Colors.primary }]}>
-          14 dager gratis
+          7 dager gratis
         </Text>
       </View>
 
@@ -37,7 +37,7 @@ export default function Paywall() {
         >
           <View>
             <Text style={[styles.planTitle, { color: Colors.text }]}>
-              14 dager gratis
+              7 dager gratis
             </Text>
             <Text style={[styles.planSubtitle, { color: Colors.mutedText }]}>
               Prøv alt uten kostnad

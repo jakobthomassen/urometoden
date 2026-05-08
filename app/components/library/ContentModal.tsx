@@ -3,6 +3,8 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { usePlayer } from '@/context/PlayerContext'
+import { useAuth } from '@/context/AuthContext'
+import { apiFetch } from '@/lib/api'
 import { type ContentItem } from './ContentCard'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -20,13 +22,15 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 type Props = {
-  item:    ContentItem | null
-  onClose: () => void
+  item:        ContentItem | null
+  onClose:     () => void
+  onComplete?: (itemId: string) => void
 }
 
-export default function ContentModal({ item, onClose }: Props) {
+export default function ContentModal({ item, onClose, onComplete }: Props) {
   const { colors: C } = useTheme()
   const { play }       = usePlayer()
+  const { token }      = useAuth()
 
   if (!item) return null
 
@@ -113,7 +117,15 @@ export default function ContentModal({ item, onClose }: Props) {
             </Pressable>
           ) : item.type === 'case' ? (
             <Pressable
-              onPress={onClose}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                apiFetch(`/api/me/progress/${item.id}`, {
+                  method: 'PATCH',
+                  body:   JSON.stringify({ completed: true }),
+                }, token).catch(() => {})
+                onComplete?.(item.id)
+                onClose()
+              }}
               style={({ pressed }) => [
                 styles.actionBtn,
                 { backgroundColor: typeColor },

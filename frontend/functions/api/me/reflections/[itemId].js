@@ -65,3 +65,14 @@ export async function onRequestPatch({ request, env, params }) {
 
   return Response.json({ ok: true })
 }
+
+export async function onRequestDelete({ request, env, params }) {
+  const payload = await getSession(request, env)
+  if (!payload) return new Response('Unauthorized', { status: 401 })
+
+  await env.DB.prepare(
+    'DELETE FROM user_reflections WHERE user_id = ? AND item_id = ?'
+  ).bind(payload.sub, params.itemId).run()
+
+  return Response.json({ ok: true })
+}
