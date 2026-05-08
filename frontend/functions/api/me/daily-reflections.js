@@ -1,7 +1,7 @@
-import { requireAuth } from '../../lib/auth.js'
+import { getSession } from '../../lib/auth.js'
 
 export async function onRequestGet({ env, request }) {
-  const user = await requireAuth(request, env)
+  const user = await getSession(request, env)
   if (!user) return new Response('Unauthorized', { status: 401 })
 
   const { results } = await env.DB.prepare(`

@@ -1,11 +1,11 @@
-import { requireAuth } from '../../lib/auth.js'
+import { getSession } from '../../lib/auth.js'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
 export async function onRequestPost({ env, request }) {
-  const user = await requireAuth(request, env)
+  const user = await getSession(request, env)
   if (!user) return new Response('Unauthorized', { status: 401 })
 
   const { body } = await request.json()
