@@ -1,4 +1,5 @@
-import { Modal, View, Text, Pressable, StyleSheet, PanResponder, Animated } from 'react-native'
+import { Modal, View, Pressable, StyleSheet, PanResponder, Animated } from 'react-native'
+import Text from '@/components/ui/Text'
 import { useRef } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Haptics from 'expo-haptics'

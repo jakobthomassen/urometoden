@@ -11,7 +11,7 @@ import changelogRaw from '../../../CHANGELOG.md?raw'
 import todoRaw      from '../../../TODO.md?raw'
 
 // DEV ONLY — remove 'Prosjekt' tab before prod
-const TABS = ['Brukere', 'Daglige tips', 'Innhold', 'Kalender', 'Logg', 'Prosjekt']
+const TABS = ['Brukere', 'Daglige tips', 'Daglige spørsmål', 'Innhold', 'Kalender', 'Logg', 'Prosjekt']
 const DAY  = 24 * 60 * 60 * 1000
 
 function getInitials(name) {
@@ -222,6 +222,191 @@ function TipRow({ tip, isNext = false, onDelete }) {
   )
 }
 
+function DailyPromptsTab() {
+  const [prompts, setPrompts]     = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [newDate, setNewDate]     = useState('')
+  const [newBody, setNewBody]     = useState('')
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState('')
+  const [editId, setEditId]       = useState(null)
+  const [editBody, setEditBody]   = useState('')
+
+  async function fetchPrompts() {
+    setLoading(true)
+    const res  = await fetch('/api/admin/daily-prompts')
+    const data = await res.json()
+    setPrompts(data)
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchPrompts() }, [])
+
+  async function handleAdd() {
+    if (!newDate || !newBody.trim()) return
+    setSaving(true)
+    setError('')
+    const res = await fetch('/api/admin/daily-prompts', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ prompt_date: newDate, body: newBody }),
+    })
+    if (res.status === 409) { setError('Den datoen har allerede et spørsmål.'); setSaving(false); return }
+    if (!res.ok)            { setError('Noe gikk galt.'); setSaving(false); return }
+    setNewDate('')
+    setNewBody('')
+    setSaving(false)
+    fetchPrompts()
+  }
+
+  async function handleEdit(id) {
+    if (!editBody.trim()) return
+    await fetch(`/api/admin/daily-prompts/${id}`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ body: editBody }),
+    })
+    setEditId(null)
+    setEditBody('')
+    fetchPrompts()
+  }
+
+  async function handleDelete(id) {
+    await fetch(`/api/admin/daily-prompts/${id}`, { method: 'DELETE' })
+    setPrompts(prev => prev.filter(p => p.id !== id))
+  }
+
+  const today    = new Date().toISOString().slice(0, 10)
+  const upcoming = prompts.filter(p => p.prompt_date >= today)
+  const past     = prompts.filter(p => p.prompt_date <  today)
+
+  return (
+    <div className={styles.tipsTab}>
+      <div className={styles.tipsCallout}>
+        <strong>Daglige refleksjonsspørsmål.</strong> Hvert spørsmål er knyttet til en dato.
+        Brukere ser dagens spørsmål og kan skrive en privat refleksjon.
+      </div>
+
+      <div className={styles.tipsAddSection}>
+        <div className={styles.tipsSectionLabel}>Nytt spørsmål</div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
+          <input
+            type="date"
+            className={styles.tipsTextarea}
+            style={{ flex: '0 0 160px', resize: 'none', padding: '8px 12px', height: 'auto' }}
+            value={newDate}
+            min={today}
+            onChange={e => setNewDate(e.target.value)}
+          />
+        </div>
+        <div className={styles.tipsAdd}>
+          <textarea
+            className={styles.tipsTextarea}
+            placeholder="Skriv inn dagens refleksjonsspørsmål…"
+            value={newBody}
+            onChange={e => setNewBody(e.target.value)}
+            rows={3}
+          />
+          <button
+            className={styles.tipsAddBtn}
+            onClick={handleAdd}
+            disabled={saving || !newDate || !newBody.trim()}
+          >
+            {saving ? 'Lagrer…' : 'Legg til'}
+          </button>
+        </div>
+        {error && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 6 }}>{error}</div>}
+      </div>
+
+      {loading ? (
+        <div className={styles.empty}>Laster…</div>
+      ) : (
+        <>
+          <div className={styles.tipsSection}>
+            <div className={styles.tipsSectionLabel}>
+              Kommende og i dag
+              {upcoming.length === 0 && <span className={styles.tipsWarning}> · Ingen planlagte spørsmål</span>}
+            </div>
+            {upcoming.length === 0
+              ? <div className={styles.empty}>Ingen spørsmål planlagt. Legg til nye ovenfor.</div>
+              : upcoming.map(p => (
+                <DailyPromptRow
+                  key={p.id}
+                  prompt={p}
+                  today={today}
+                  isEditing={editId === p.id}
+                  editBody={editBody}
+                  onStartEdit={() => { setEditId(p.id); setEditBody(p.body) }}
+                  onEditChange={setEditBody}
+                  onSaveEdit={() => handleEdit(p.id)}
+                  onCancelEdit={() => setEditId(null)}
+                  onDelete={handleDelete}
+                />
+              ))
+            }
+          </div>
+
+          <div className={styles.tipsSection}>
+            <div className={styles.tipsSectionLabel}>Tidligere</div>
+            {past.length === 0
+              ? <div className={styles.empty}>Ingen tidligere spørsmål.</div>
+              : past.map(p => (
+                <DailyPromptRow
+                  key={p.id}
+                  prompt={p}
+                  today={today}
+                  isEditing={editId === p.id}
+                  editBody={editBody}
+                  onStartEdit={() => { setEditId(p.id); setEditBody(p.body) }}
+                  onEditChange={setEditBody}
+                  onSaveEdit={() => handleEdit(p.id)}
+                  onCancelEdit={() => setEditId(null)}
+                  onDelete={handleDelete}
+                />
+              ))
+            }
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function DailyPromptRow({ prompt, today, isEditing, editBody, onStartEdit, onEditChange, onSaveEdit, onCancelEdit, onDelete }) {
+  const isToday = prompt.prompt_date === today
+  return (
+    <div className={`${styles.tipRow} ${isToday ? styles.tipRowNext : ''}`}>
+      <div className={styles.tipRowLeft} style={{ flex: 1 }}>
+        {isToday && <span className={styles.tipNextBadge}>I dag</span>}
+        <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{prompt.prompt_date}</div>
+        {isEditing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <textarea
+              className={styles.tipsTextarea}
+              value={editBody}
+              onChange={e => onEditChange(e.target.value)}
+              rows={3}
+              style={{ width: '100%' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className={styles.tipsAddBtn} onClick={onSaveEdit} disabled={!editBody.trim()}>Lagre</button>
+              <button className={`${styles.btn}`} onClick={onCancelEdit}>Avbryt</button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.tipBody}>{prompt.body}</div>
+        )}
+      </div>
+      {!isEditing && (
+        <div className={styles.tipMeta}>
+          <button className={styles.btn} onClick={onStartEdit}>Rediger</button>
+          <button className={`${styles.btn} ${styles.btnDanger}`} onClick={() => onDelete(prompt.id)}>Slett</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // DEV ONLY — entire ProsjektDoc component and 'Prosjekt' tab to be removed before prod
 function ProsjektDoc({ label, raw }) {
   const [open, setOpen] = useState(true)
@@ -406,6 +591,8 @@ export default function AdminPage({ user, onLogout }) {
         )}
 
         {activeTab === 'Daglige tips' && <TipsTab />}
+
+        {activeTab === 'Daglige spørsmål' && <DailyPromptsTab />}
 
         {activeTab === 'Innhold' && <AdminContentTab />}
 

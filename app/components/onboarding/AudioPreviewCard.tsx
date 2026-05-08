@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+import Text from "@/components/ui/Text";
 import { useTheme } from "@/components/ui/ThemeContext";
 
 export default function AudioPreviewCard({

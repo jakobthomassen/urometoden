@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   View,
-  Text,
   TextInput,
   StyleSheet,
   Pressable,
@@ -10,6 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native'
+import Text from '@/components/ui/Text'
 import {
   GoogleSignin,
   statusCodes,

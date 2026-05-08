@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import {
-  View, Text, StyleSheet, ScrollView,
+  View, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator, Animated,
 } from 'react-native'
+import Text from '@/components/ui/Text'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 import { apiFetch } from '@/lib/api'

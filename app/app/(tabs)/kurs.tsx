@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Animated, ActivityIndicator, Linking, Modal, Pressable,
-  ScrollView, StyleSheet, Text, TouchableOpacity, View,
+  ScrollView, StyleSheet, TouchableOpacity, View,
 } from 'react-native'
+import Text from '@/components/ui/Text'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useFocusEffect } from 'expo-router'
 import { useTheme } from '@/components/ui/ThemeContext'

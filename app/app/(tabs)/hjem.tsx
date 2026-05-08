@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import {
-  ScrollView, View, Text, StyleSheet,
-  TouchableOpacity, Animated,
+  ScrollView, View, StyleSheet,
+  TouchableOpacity, Animated, TextInput,
 } from 'react-native'
+import Text from '@/components/ui/Text'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { router } from 'expo-router'
 import { useTheme } from '@/components/ui/ThemeContext'
@@ -32,6 +33,88 @@ function FadeUp({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 const WEEK_TITLES: Record<number, string> = {
   1: 'Møt uroen', 2: 'Reaktivitet', 3: 'Pust og ro', 4: 'Kroppen vet',
   5: 'Mønstre',   6: 'Ressursen',   7: 'Integrasjon', 8: 'Veien videre',
+}
+
+type DailyData = {
+  prompt:     { id: number; body: string } | null
+  reflection: { id: number; body: string } | null
+  date:       string
+}
+
+function DailyReflectionCard({ token, C }: { token: string | null; C: any }) {
+  const [data, setData]     = useState<DailyData | null>(null)
+  const [draft, setDraft]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved]   = useState(false)
+
+  useFocusEffect(useCallback(() => {
+    apiFetch('/api/daily-prompt', {}, token)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: DailyData | null) => {
+        if (!d?.prompt) return
+        setData(d)
+        setDraft(d.reflection?.body ?? '')
+      })
+      .catch(() => {})
+  }, [token]))
+
+  if (!data?.prompt) return null
+
+  const isDone    = !!data.reflection?.body
+  const unchanged = draft === (data.reflection?.body ?? '')
+
+  async function handleSave() {
+    if (!draft.trim() || saving) return
+    setSaving(true)
+    apiFetch('/api/me/daily-reflection', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ body: draft.trim() }),
+    }, token)
+      .then(r => r.ok ? r.json() : null)
+      .then(result => {
+        if (result) {
+          setData(prev => prev ? { ...prev, reflection: result } : prev)
+          setDraft(result.body)
+          setSaved(true)
+          setTimeout(() => setSaved(false), 2500)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setSaving(false))
+  }
+
+  return (
+    <View style={[styles.reflCard, { backgroundColor: C.card, borderColor: isDone ? C.primary + '44' : C.border }]}>
+      <View style={styles.reflTop}>
+        <Text style={[styles.reflEyebrow, { color: C.primary }]}>DAGENS REFLEKSJON</Text>
+        {isDone && (
+          <Text style={[styles.reflDoneBadge, { color: C.primary, backgroundColor: C.primarySoft }]}>✓ Fullført</Text>
+        )}
+      </View>
+      <Text style={[styles.reflPrompt, { color: C.text }]}>{data.prompt.body}</Text>
+      <TextInput
+        style={[styles.reflInput, { backgroundColor: C.surface2 ?? C.background, borderColor: C.border, color: C.text }]}
+        placeholder="Skriv din refleksjon her…"
+        placeholderTextColor={C.subtleText}
+        value={draft}
+        onChangeText={setDraft}
+        multiline
+        numberOfLines={4}
+        textAlignVertical="top"
+      />
+      <TouchableOpacity
+        style={[styles.reflBtn, { backgroundColor: C.primary, opacity: saving || !draft.trim() || unchanged ? 0.4 : 1 }]}
+        onPress={handleSave}
+        disabled={saving || !draft.trim() || unchanged}
+        activeOpacity={0.85}
+      >
+        <Text style={[styles.reflBtnText, { color: C.white }]}>
+          {saving ? 'Lagrer…' : saved ? 'Lagret ✓' : isDone ? 'Oppdater' : 'Lagre'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  )
 }
 
 export default function HjemScreen() {
@@ -111,7 +194,11 @@ export default function HjemScreen() {
         </TouchableOpacity>
       </FadeUp>
 
-      <FadeUp delay={180}>
+      <FadeUp delay={160}>
+        <DailyReflectionCard token={token} C={C} />
+      </FadeUp>
+
+      <FadeUp delay={220}>
         <View style={[styles.tipCard, { backgroundColor: C.card, borderColor: C.border }]}>
           <Text style={[styles.tipEyebrow, { color: C.primary }]}>DAGENS TANKE</Text>
           <Text style={[styles.tipText, { color: C.mutedText }]}>
@@ -120,7 +207,7 @@ export default function HjemScreen() {
         </View>
       </FadeUp>
 
-      <FadeUp delay={240}>
+      <FadeUp delay={280}>
         <Text style={[styles.sectionTitle, { color: C.text }]}>Snarveier</Text>
       </FadeUp>
 
@@ -129,7 +216,7 @@ export default function HjemScreen() {
         { icon: 'create-outline',   title: 'Refleksjon',   sub: 'Skriv ned det du legger merke til', href: '/reflections' },
         { icon: 'school-outline',   title: 'Uro-skolen',   sub: 'Kunnskap og historier',             href: '/(tabs)/kurs' },
       ].map((item, i) => (
-        <FadeUp key={item.href} delay={300 + i * 60}>
+        <FadeUp key={item.href} delay={340 + i * 60}>
           <TouchableOpacity
             style={[styles.linkCard, { backgroundColor: C.card, borderColor: C.border }]}
             activeOpacity={0.9}
@@ -165,6 +252,16 @@ const styles = StyleSheet.create({
   cardDescription:  { fontSize: 16, lineHeight: 24, marginBottom: 18, maxWidth: '90%' },
   startButton:      { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14 },
   startButtonText:  { fontSize: 15, fontWeight: '700' },
+
+  reflCard:         { borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 18, gap: 12 },
+  reflTop:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  reflEyebrow:      { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  reflDoneBadge:    { fontSize: 11, fontWeight: '700', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  reflPrompt:       { fontSize: 15, lineHeight: 22, fontStyle: 'italic' },
+  reflInput:        { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14, lineHeight: 20, minHeight: 88 },
+  reflBtn:          { borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  reflBtnText:      { fontSize: 15, fontWeight: '700' },
+
   tipCard:          { borderRadius: 20, borderWidth: 1, padding: 18, marginBottom: 24 },
   tipEyebrow:       { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
   tipText:          { fontSize: 16, lineHeight: 25, fontStyle: 'italic' },

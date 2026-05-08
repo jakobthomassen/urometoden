@@ -1,5 +1,25 @@
 # Changelog
 
+## 08.05.2026
+
+**Email/password auth (web + mobile)**
+
+Migration 013 adds `password_resets` table (`token`, `user_id`, `expires_at`, `used_at`). `identities.credential` (already present) stores the password hash. Passwords are hashed with PBKDF2-SHA256 at 100 000 iterations via `crypto.subtle` in a new `functions/lib/password.js`. Session creation logic extracted to `functions/lib/session.js` (`createWebSession` / `createNativeSession`) and reused across all auth endpoints.
+
+New web endpoints: `POST /api/auth/signup`, `POST /api/auth/signin-email` (both set a 30-day HttpOnly session cookie and return JSON). New mobile endpoints: `POST /api/auth/native-email-signup`, `POST /api/auth/native-email-signin` (both return a 90-day JWT matching the Google auth shape). Password reset: `POST /api/auth/reset-request` generates a 32-byte hex token, stores it (1-hour TTL), and sends a reset email via Resend (`noreply@urometoden.no`); `POST /api/auth/reset-confirm` validates the token and upserts the new credential. If an email-only user signs up with an email that already has a Google identity, the password credential is linked to the existing account rather than creating a duplicate. Email verification intentionally skipped — noted in TODO for pre-launch.
+
+Web `OnboardingPage` rewritten: Google | E-post tab switcher; email tab supports sign-in, sign-up (with confirm-password), reset-request, and reset-confirm modes. Reset confirm mode auto-activates when `?reset_token=` is present in the URL.
+
+Mobile `auth/signin.tsx` rewritten: Sosiale | E-post tabs; email tab supports sign-in, sign-up, and reset-request forms with inline error/success feedback. `AuthContext` extended with `signInWithEmail`, `signUpWithEmail`, and `requestPasswordReset`.
+
+**Mobile TODO items resolved**
+
+Lydbibliotek: fetches `/api/me/progress` in parallel with content on every focus; `completed` and `progress` props on `ContentCard` now reflect real DB state. `ContentModal` "Lest" button (cases) PATCHes `/api/me/progress/[itemId]` with `completed: true` and fires an `onComplete` callback so the parent list updates immediately without a refetch. Week detail (`uke/[id].tsx`) fires `POST /api/me/weeks/[weekId]/start` once on first mount via a ref guard. Home screen fetches `/api/me/progress` on focus and shows the active week number, title, and completion count in the journey card; "Fortsett" navigates directly to the active week.
+
+Reflections screen rewritten: GDPR Article 9 consent gate (inline card, POSTs to `/api/me/consent`) shown before the input; list fetched from new `GET /api/me/reflections`; entries created via `POST /api/me/reflections` (standalone UUID item_id); delete via `DELETE /api/me/reflections/[itemId]` with confirmation dialog. New backend `reflections.js` handles GET/POST; DELETE added to existing `reflections/[itemId].js`.
+
+---
+
 ## 07.05.2026 (continued x4)
 
 React Native / Expo mobile app — full initial build.

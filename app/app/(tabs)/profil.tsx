@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+  View, StyleSheet, TouchableOpacity, ScrollView,
   Animated, Modal, Pressable, ActivityIndicator, Alert,
 } from 'react-native'
+import Text from '@/components/ui/Text'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { router, useFocusEffect } from 'expo-router'
 import { useTheme } from '@/components/ui/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 import { apiFetch } from '@/lib/api'
+import DailyReflectionArchiveModal from '@/components/daily/DailyReflectionArchiveModal'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -331,6 +333,7 @@ export default function ProfilScreen() {
   const [activeTab, setActiveTab]           = useState<'progress' | 'reflections'>('progress')
   const [stats, setStats]                   = useState<Stats | null>(null)
   const [showSettings, setShowSettings]     = useState(false)
+  const [showDailyArchive, setShowDailyArchive] = useState(false)
 
   const palette = useMemo(() => ({
     avatarBg:           isDark ? '#2A2926' : '#E8E6DF',
@@ -486,24 +489,45 @@ export default function ProfilScreen() {
             </FadeUp>
           </>
         ) : (
-          <FadeUp delay={260}>
-            <TouchableOpacity
-              style={[styles.linkCard, { backgroundColor: C.card, borderColor: C.border }]}
-              activeOpacity={0.9}
-              onPress={() => router.push('/reflections')}
-            >
-              <View style={styles.linkLeft}>
-                <View style={[styles.linkIconBox, { backgroundColor: C.background }]}>
-                  <Ionicons name="create-outline" size={26} color={C.text} />
+          <>
+            <FadeUp delay={260}>
+              <TouchableOpacity
+                style={[styles.linkCard, { backgroundColor: C.card, borderColor: C.border }]}
+                activeOpacity={0.9}
+                onPress={() => router.push('/reflections')}
+              >
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIconBox, { backgroundColor: C.background }]}>
+                    <Ionicons name="create-outline" size={26} color={C.text} />
+                  </View>
+                  <View>
+                    <Text style={[styles.linkTitle, { color: C.text }]}>Refleksjoner</Text>
+                    <Text style={[styles.linkSubtitle, { color: C.mutedText }]}>Skriv ned det du legger merke til</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={[styles.linkTitle, { color: C.text }]}>Refleksjoner</Text>
-                  <Text style={[styles.linkSubtitle, { color: C.mutedText }]}>Skriv ned det du legger merke til</Text>
+                <Ionicons name="chevron-forward" size={26} color={C.mutedText} />
+              </TouchableOpacity>
+            </FadeUp>
+
+            <FadeUp delay={340}>
+              <TouchableOpacity
+                style={[styles.linkCard, { backgroundColor: C.card, borderColor: C.border }]}
+                activeOpacity={0.9}
+                onPress={() => setShowDailyArchive(true)}
+              >
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIconBox, { backgroundColor: C.background }]}>
+                    <Ionicons name="calendar-outline" size={26} color={C.text} />
+                  </View>
+                  <View>
+                    <Text style={[styles.linkTitle, { color: C.text }]}>Daglige refleksjoner</Text>
+                    <Text style={[styles.linkSubtitle, { color: C.mutedText }]}>Se dine tidligere svar</Text>
+                  </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={26} color={C.mutedText} />
-            </TouchableOpacity>
-          </FadeUp>
+                <Ionicons name="chevron-forward" size={26} color={C.mutedText} />
+              </TouchableOpacity>
+            </FadeUp>
+          </>
         )}
       </ScrollView>
 
@@ -517,6 +541,10 @@ export default function ProfilScreen() {
           token={token}
           signOut={signOut}
         />
+      )}
+
+      {showDailyArchive && (
+        <DailyReflectionArchiveModal onClose={() => setShowDailyArchive(false)} />
       )}
     </>
   )

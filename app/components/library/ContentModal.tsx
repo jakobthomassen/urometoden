@@ -1,4 +1,5 @@
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { Modal, View, Pressable, ScrollView, StyleSheet } from 'react-native'
+import Text from '@/components/ui/Text'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/components/ui/ThemeContext'

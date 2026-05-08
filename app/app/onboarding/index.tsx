@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   Dimensions,
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
+import Text from "@/components/ui/Text";
 import { router } from "expo-router";
 import OnboardingSlide from "@/components/onboarding/OnboardingSlide";
 import { onboardingSlides } from "@/constants/onboardingData";

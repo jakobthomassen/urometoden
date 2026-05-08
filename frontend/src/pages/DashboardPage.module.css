@@ -285,3 +285,196 @@
   font-style: italic;
   margin: 0;
 }
+
+/* Daily reflection card */
+.reflCard {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reflCardDone {
+  border-color: rgba(61,107,90,0.25);
+}
+
+.reflLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reflLabelText {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+}
+
+.reflDoneBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.reflPrompt {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0;
+  font-style: italic;
+}
+
+.reflTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface2);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+  transition: border-color 0.14s;
+}
+.reflTextarea:focus { border-color: var(--accent); }
+.reflTextarea::placeholder { color: var(--text-3); }
+
+.reflFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reflSaveBtn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.13s;
+}
+.reflSaveBtn:hover   { opacity: 0.86; }
+.reflSaveBtn:disabled { opacity: 0.4; cursor: default; }
+
+.reflHistoryLink {
+  font-size: 12px;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-body);
+  transition: color 0.13s;
+}
+.reflHistoryLink:hover { color: var(--text-2); }
+
+/* History modal */
+.historyOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.42);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 900;
+  padding: 0 0 0 0;
+}
+
+.historyModal {
+  background: var(--surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: 680px;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.historyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.historyClose {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.13s;
+}
+.historyClose:hover { color: var(--text); }
+
+.historyList {
+  overflow-y: auto;
+  padding: 8px 0 24px;
+  scrollbar-width: thin;
+}
+
+.historyEmpty {
+  padding: 32px 22px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.historyItem {
+  padding: 16px 22px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.historyItem:last-child { border-bottom: none; }
+
+.historyItemDate {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+}
+
+.historyItemPrompt {
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.historyItemBody {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.65;
+}

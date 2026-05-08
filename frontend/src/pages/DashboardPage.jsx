@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './DashboardPage.module.css'
 import { isMember } from '../utils/membership'
 
@@ -125,6 +125,134 @@ function useCountdown(targetDate) {
   return formatCountdown(ms)
 }
 
+function useDailyReflection() {
+  const [data, setData]       = useState(null)
+  const [saving, setSaving]   = useState(false)
+  const [draft, setDraft]     = useState(null)
+
+  useEffect(() => {
+    fetch('/api/daily-prompt', { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return
+        setData(d)
+        setDraft(d.reflection?.body ?? '')
+      })
+      .catch(() => {})
+  }, [])
+
+  const save = useCallback(async (body) => {
+    setSaving(true)
+    const res  = await fetch('/api/me/daily-reflection', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body:    JSON.stringify({ body }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setData(prev => ({ ...prev, reflection: updated }))
+      setDraft(updated.body)
+    }
+    setSaving(false)
+  }, [])
+
+  return { data, draft, setDraft, saving, save }
+}
+
+function formatHistoryDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function DailyReflectionHistoryModal({ onClose }) {
+  const [items, setItems]   = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/me/daily-reflections', { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setItems(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  return (
+    <div className={styles.historyOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.historyModal}>
+        <div className={styles.historyHeader}>
+          <span className={styles.historyTitle}>Refleksjonshistorikk</span>
+          <button className={styles.historyClose} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.historyList}>
+          {loading ? (
+            <div className={styles.historyEmpty}>Laster…</div>
+          ) : items.length === 0 ? (
+            <div className={styles.historyEmpty}>Ingen refleksjoner ennå.</div>
+          ) : items.map(item => (
+            <div key={item.id} className={styles.historyItem}>
+              <div className={styles.historyItemDate}>{formatHistoryDate(item.prompt_date)}</div>
+              {item.prompt_body && (
+                <div className={styles.historyItemPrompt}>{item.prompt_body}</div>
+              )}
+              <div className={styles.historyItemBody}>{item.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DailyReflectionCard() {
+  const { data, draft, setDraft, saving, save } = useDailyReflection()
+  const [showHistory, setShowHistory]           = useState(false)
+  const [saved, setSaved]                       = useState(false)
+
+  if (!data?.prompt) return null
+
+  const isDone      = !!data.reflection?.body
+  const unchanged   = draft === (data.reflection?.body ?? '')
+
+  async function handleSave() {
+    if (!draft?.trim()) return
+    await save(draft.trim())
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  return (
+    <>
+      <div className={`${styles.reflCard} ${isDone ? styles.reflCardDone : ''}`}>
+        <div className={styles.reflLabel}>
+          <span className={styles.reflLabelText}>DAGENS REFLEKSJON</span>
+          {isDone && <span className={styles.reflDoneBadge}>✓ Fullført</span>}
+        </div>
+        <p className={styles.reflPrompt}>{data.prompt.body}</p>
+        <textarea
+          className={styles.reflTextarea}
+          placeholder="Skriv din refleksjon her…"
+          value={draft ?? ''}
+          onChange={e => setDraft(e.target.value)}
+          rows={4}
+        />
+        <div className={styles.reflFooter}>
+          <button
+            className={styles.reflSaveBtn}
+            onClick={handleSave}
+            disabled={saving || !draft?.trim() || unchanged}
+          >
+            {saving ? 'Lagrer…' : saved ? 'Lagret ✓' : isDone ? 'Oppdater' : 'Lagre'}
+          </button>
+          <button className={styles.reflHistoryLink} onClick={() => setShowHistory(true)}>
+            Vis tidligere refleksjoner →
+          </button>
+        </div>
+      </div>
+      {showHistory && <DailyReflectionHistoryModal onClose={() => setShowHistory(false)} />}
+    </>
+  )
+}
+
 function MemberDashboard({ weeks, onNavigateToWeek, tip }) {
   const doneCount  = weeks.filter(w => w.status === 'done').length
   const progress   = (doneCount / 8) * 100
@@ -192,6 +320,8 @@ function MemberDashboard({ weeks, onNavigateToWeek, tip }) {
           )}
         </div>
       </div>
+
+      <DailyReflectionCard />
 
       <div className={styles.tipCard}>
         <div className={styles.tipLabel}>Dagens tanke</div>

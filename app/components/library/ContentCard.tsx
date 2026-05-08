@@ -1,4 +1,5 @@
-import { Pressable, View, Text, StyleSheet } from 'react-native'
+import { Pressable, View, StyleSheet } from 'react-native'
+import Text from '@/components/ui/Text'
 import * as Haptics from 'expo-haptics'
 import { useTheme } from '@/components/ui/ThemeContext'
 
@@ -21,11 +22,18 @@ const TYPE_LABELS: Record<string, string> = {
   video:   'Video',
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  audio:   '#5F8B73',
-  case:    '#7B6FAA',
-  reflect: '#C0845A',
-  video:   '#4A90B8',
+const TYPE_COLORS_LIGHT: Record<string, string> = {
+  audio:   '#3A6EA5',
+  case:    '#7B5EA7',
+  reflect: '#3D6B5A',
+  video:   '#A0503A',
+}
+
+const TYPE_COLORS_DARK: Record<string, string> = {
+  audio:   '#6B9FD4',
+  case:    '#A07ED4',
+  reflect: '#52A882',
+  video:   '#C4785A',
 }
 
 type Props = {
@@ -35,9 +43,26 @@ type Props = {
   onPress:    () => void
 }
 
+const TYPE_BG_LIGHT: Record<string, string> = {
+  audio:   '#E8F0F9',
+  case:    '#EDE8F5',
+  reflect: '#EBF2EE',
+  video:   '#F5EAE8',
+}
+
+const TYPE_BG_DARK: Record<string, string> = {
+  audio:   '#1A2030',
+  case:    '#1E1A2C',
+  reflect: '#16231E',
+  video:   '#261A16',
+}
+
 export default function ContentCard({ item, completed = false, progress = 0, onPress }: Props) {
-  const { colors: C } = useTheme()
+  const { colors: C, isDark } = useTheme()
+  const TYPE_COLORS = isDark ? TYPE_COLORS_DARK : TYPE_COLORS_LIGHT
+  const TYPE_BG = isDark ? TYPE_BG_DARK : TYPE_BG_LIGHT
   const typeColor = TYPE_COLORS[item.type] ?? C.primary
+  const typeBg    = TYPE_BG[item.type] ?? C.primarySoft
 
   async function handlePress() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -53,7 +78,7 @@ export default function ContentCard({ item, completed = false, progress = 0, onP
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.badge, { backgroundColor: typeColor + '22' }]}>
+      <View style={[styles.badge, { backgroundColor: typeBg }]}>
         <Text style={[styles.badgeText, { color: typeColor }]}>
           {TYPE_LABELS[item.type]}
         </Text>
@@ -89,7 +114,7 @@ export default function ContentCard({ item, completed = false, progress = 0, onP
       ) : null}
 
       {completed ? (
-        <View style={[styles.checkWrap, { backgroundColor: typeColor + '22' }]}>
+        <View style={[styles.checkWrap, { backgroundColor: typeBg }]}>
           <Text style={[styles.check, { color: typeColor }]}>✓</Text>
         </View>
       ) : null}

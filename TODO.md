@@ -16,7 +16,16 @@ Explicit consent (Article 9(2)(a)) is already gated in the app. Still required b
 
 ---
 
+### Mobile — housekeeping
+
+**Migrate expo-av → expo-audio + expo-video** *(before SDK 55)*
+`expo-av` is deprecated in SDK 54 and will be removed in SDK 55. `PlayerContext` uses `Audio.Sound` from `expo-av`. Replace with `expo-audio` for the audio player and `expo-video` if video playback is ever added. API differs — `expo-audio` uses `AudioPlayer` instead of `Audio.Sound.createAsync`. Plan a dedicated migration session.
+
+
 ### Mobile — unimplemented / incomplete
+
+**Email verification** *(skipped at launch — implement before public release)*
+Email/password accounts are created without verifying ownership of the address. A malicious user can register with someone else's email. Required before public launch: send a verification email on signup, block sign-in until the address is confirmed, and add a `email_verified_at` column to `users` (or `identities`). A resend-verification flow is also needed. Pairs with Resend integration already in place for password reset.
 
 **Reflections screen — content-item reflections not shown**
 The standalone journal (`/reflections`) is wired to `/api/me/reflections` (GET/POST/DELETE). However, reflections written inside weekly content items (via `ReflectionModal` equivalent) are stored under a different flow and are not surfaced in the journal view. Decide whether the journal should aggregate all reflections or remain standalone.
