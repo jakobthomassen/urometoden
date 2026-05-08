@@ -1,5 +1,35 @@
 # Changelog
 
+## 09.05.2026
+
+**Daily rotating reflection questions**
+
+Migration 014 adds two tables: `daily_prompts` (`id`, `prompt_date TEXT UNIQUE`, `body`, `created_at`) and `user_daily_reflections` (`id`, `user_id FK`, `prompt_date`, `body`, `updated_at`, UNIQUE on `user_id + prompt_date`). Prompts are global per day — one prompt per date, same for all users. Each user gets one editable reflection entry per day (upsert).
+
+New API endpoints: `GET /api/daily-prompt` returns today's prompt and the authenticated user's existing reflection if any. `POST /api/me/daily-reflection` upserts today's reflection (idempotent — re-saving the same day updates the existing row). `GET /api/me/daily-reflections` returns full history with the prompt text joined.
+
+Admin "Daglige spørsmål" tab added to the admin panel — mirrors the tips tab pattern. Date input (with minimum today) + textarea to create new prompts. Prompts listed in two sections: upcoming/today and past. Each row shows the date, prompt body, and inline edit/delete actions. Conflict (duplicate date) returns a user-facing error.
+
+Web: `DailyReflectionCard` added to `MemberDashboard` on the dashboard page — visible to members only. Shows today's prompt, a textarea pre-filled with any existing reflection, and a save/update button with a completion badge when already filled. A "Vis tidligere refleksjoner →" text link opens a slide-up modal (bottom sheet, same pattern as event archive) listing all past entries with dates, prompt text, and reflection body. Card is absent when no prompt is configured for today.
+
+Mobile home (`hjem.tsx`): `DailyReflectionCard` inline between the journey card and the daily tip. Uses `useFocusEffect` so it refreshes on every tab focus. Absent when no prompt exists for today. Mobile profile (`profil.tsx`): "Daglige refleksjoner" link card added to the reflections tab — opens `DailyReflectionArchiveModal` (page-sheet, same pattern as event archive) showing the full history with date headers and prompt context.
+
+**Mobile theme overhaul**
+
+`@expo-google-fonts/dm-sans` installed. Root `_layout.tsx` loads four weights (400/500/600/700) via `useFonts` and renders `null` until fonts are ready. New `components/ui/Text.tsx` wraps React Native `Text` — reads `fontWeight` from the style prop and maps it to the correct DM Sans font family name (`DMSans_700Bold` for `'700'`, etc.), so `fontWeight` works correctly on iOS where it otherwise has no effect on custom fonts. All 18 files that imported `Text` from `react-native` updated to import from the custom wrapper.
+
+`constants/colors.ts` fully rewritten to match THEME.md exactly. Light mode: `background #F5F2EE`, `card #FDFCFA`, `surface2 #F0EDE8`, `text #1C1612`, `mutedText #6B5E52`, `subtleText #A8998C`, `primary #3D6B5A`, `primarySoft #EBF2EE`, rgba borders. Dark mode: neutral grays, `primary #52A882`, no warm cast. All missing tokens added: `surface2`, `subtleText`, `borderMd`, `accent2`, `accent2Bg`, `amber`, `locked`, `danger`, and per-type color pairs (`audioBg/audioFg`, `caseBg/caseFg`, `videoBg/videoFg`). `ContentCard` updated to use THEME.md type color tokens and proper `typeBg` for badges — dark mode variants applied correctly.
+
+**Bug fix**
+
+`lydbibliotek.tsx`: `useEffect` was missing from the React import, causing a crash in the `FadeIn` animation component.
+
+**Favicon**
+
+`frontend/public/logo.svg`: standalone SVG favicon with transparent background. Embedded CSS media query applies `fill: #1C1612` in light mode and `fill: #EDEDEC` in dark mode — follows OS `prefers-color-scheme`, no background rect. PNG fallbacks (`favicon-96x96.png`, `favicon.ico`, `apple-touch-icon.png`) and web app manifest PNGs added to `public/`. `index.html` updated with favicon link tags. `site.webmanifest` name set to "Urometoden", `theme_color` and `background_color` set to `#F5F2EE`.
+
+---
+
 ## 08.05.2026
 
 **Email/password auth (web + mobile)**
