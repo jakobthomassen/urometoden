@@ -223,14 +223,19 @@ function TipRow({ tip, isNext = false, onDelete }) {
 }
 
 function DailyPromptsTab() {
-  const [prompts, setPrompts]     = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [newDate, setNewDate]     = useState('')
-  const [newBody, setNewBody]     = useState('')
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState('')
-  const [editId, setEditId]       = useState(null)
-  const [editBody, setEditBody]   = useState('')
+  const [prompts, setPrompts]         = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [newPoolBody, setNewPoolBody] = useState('')
+  const [savingPool, setSavingPool]   = useState(false)
+  const [poolError, setPoolError]     = useState('')
+  const [newOvDate, setNewOvDate]     = useState('')
+  const [newOvBody, setNewOvBody]     = useState('')
+  const [savingOv, setSavingOv]       = useState(false)
+  const [ovError, setOvError]         = useState('')
+  const [editId, setEditId]           = useState(null)
+  const [editBody, setEditBody]       = useState('')
+
+  const today = new Date().toISOString().slice(0, 10)
 
   async function fetchPrompts() {
     setLoading(true)
@@ -242,20 +247,35 @@ function DailyPromptsTab() {
 
   useEffect(() => { fetchPrompts() }, [])
 
-  async function handleAdd() {
-    if (!newDate || !newBody.trim()) return
-    setSaving(true)
-    setError('')
+  async function handleAddPool() {
+    if (!newPoolBody.trim()) return
+    setSavingPool(true)
+    setPoolError('')
     const res = await fetch('/api/admin/daily-prompts', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ prompt_date: newDate, body: newBody }),
+      body:    JSON.stringify({ body: newPoolBody }),
     })
-    if (res.status === 409) { setError('Den datoen har allerede et spørsmål.'); setSaving(false); return }
-    if (!res.ok)            { setError('Noe gikk galt.'); setSaving(false); return }
-    setNewDate('')
-    setNewBody('')
-    setSaving(false)
+    if (!res.ok) { setPoolError('Noe gikk galt.'); setSavingPool(false); return }
+    setNewPoolBody('')
+    setSavingPool(false)
+    fetchPrompts()
+  }
+
+  async function handleAddOverride() {
+    if (!newOvDate || !newOvBody.trim()) return
+    setSavingOv(true)
+    setOvError('')
+    const res = await fetch('/api/admin/daily-prompts', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ prompt_date: newOvDate, body: newOvBody }),
+    })
+    if (res.status === 409) { setOvError('Den datoen har allerede en override.'); setSavingOv(false); return }
+    if (!res.ok)            { setOvError('Noe gikk galt.'); setSavingOv(false); return }
+    setNewOvDate('')
+    setNewOvBody('')
+    setSavingOv(false)
     fetchPrompts()
   }
 
@@ -276,96 +296,141 @@ function DailyPromptsTab() {
     setPrompts(prev => prev.filter(p => p.id !== id))
   }
 
-  const today    = new Date().toISOString().slice(0, 10)
-  const upcoming = prompts.filter(p => p.prompt_date >= today)
-  const past     = prompts.filter(p => p.prompt_date <  today)
+  const pool      = prompts.filter(p => p.prompt_date === null)
+  const overrides = prompts.filter(p => p.prompt_date !== null)
+  const upcomingOv = overrides.filter(p => p.prompt_date >= today).sort((a, b) => a.prompt_date.localeCompare(b.prompt_date))
+  const pastOv     = overrides.filter(p => p.prompt_date <  today).sort((a, b) => b.prompt_date.localeCompare(a.prompt_date))
+
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const poolUnused   = pool.filter(p => !p.used_at)
+  const poolRecent   = pool.filter(p =>  p.used_at && p.used_at >= sevenDaysAgo)
+  const poolOld      = pool.filter(p =>  p.used_at && p.used_at <  sevenDaysAgo)
+
+  function rowProps(p) {
+    return {
+      key:          p.id,
+      prompt:       p,
+      today,
+      isEditing:    editId === p.id,
+      editBody,
+      onStartEdit:  () => { setEditId(p.id); setEditBody(p.body) },
+      onEditChange: setEditBody,
+      onSaveEdit:   () => handleEdit(p.id),
+      onCancelEdit: () => setEditId(null),
+      onDelete:     handleDelete,
+    }
+  }
 
   return (
     <div className={styles.tipsTab}>
+
       <div className={styles.tipsCallout}>
-        <strong>Daglige refleksjonsspørsmål.</strong> Hvert spørsmål er knyttet til en dato.
-        Brukere ser dagens spørsmål og kan skrive en privat refleksjon.
+        <strong>Slik fungerer det:</strong> Systemet trekker daglig et tilfeldig spørsmål fra
+        spørsmålspoolen med en 7-dagers karantene før gjenbruk.
+        {pool.length > 0 && (
+          <span className={styles.tipsCoverage}> {pool.length} spørsmål = ca. {pool.length} dager uten gjentakelse.</span>
+        )}
+        {' '}<strong>Datooverride</strong> tvinger frem et bestemt spørsmål på én valgt dato og overstyrer poolen den dagen.
       </div>
 
+      {/* ── Add to pool ── */}
       <div className={styles.tipsAddSection}>
-        <div className={styles.tipsSectionLabel}>Nytt spørsmål</div>
+        <div className={styles.tipsSectionLabel}>Legg til i spørsmålspool</div>
+        <div className={styles.tipsAdd}>
+          <textarea
+            className={styles.tipsTextarea}
+            placeholder="Skriv inn et refleksjonsspørsmål som legges i rotasjonen…"
+            value={newPoolBody}
+            onChange={e => setNewPoolBody(e.target.value)}
+            rows={3}
+          />
+          <button
+            className={styles.tipsAddBtn}
+            onClick={handleAddPool}
+            disabled={savingPool || !newPoolBody.trim()}
+          >
+            {savingPool ? 'Lagrer…' : 'Legg til i pool'}
+          </button>
+        </div>
+        {poolError && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 6 }}>{poolError}</div>}
+      </div>
+
+      {/* ── Date override ── */}
+      <div className={styles.tipsAddSection} style={{ background: 'var(--surface-2, #f5f5f5)', border: '1.5px dashed var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+        <div className={styles.tipsSectionLabel} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          📅 Datooverride
+          <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-3)' }}>
+            — vises alltid på valgt dato, uavhengig av poolen
+          </span>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '4px 0 10px' }}>
+          Bruk dette for å knytte et spesifikt spørsmål til en bestemt dag (høytider, temauke o.l.).
+          Poolen hoppes over den dagen.
+        </p>
         <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
           <input
             type="date"
             className={styles.tipsTextarea}
             style={{ flex: '0 0 160px', resize: 'none', padding: '8px 12px', height: 'auto' }}
-            value={newDate}
+            value={newOvDate}
             min={today}
-            onChange={e => setNewDate(e.target.value)}
+            onChange={e => setNewOvDate(e.target.value)}
           />
         </div>
         <div className={styles.tipsAdd}>
           <textarea
             className={styles.tipsTextarea}
-            placeholder="Skriv inn dagens refleksjonsspørsmål…"
-            value={newBody}
-            onChange={e => setNewBody(e.target.value)}
+            placeholder="Spørsmål som vises akkurat denne datoen…"
+            value={newOvBody}
+            onChange={e => setNewOvBody(e.target.value)}
             rows={3}
           />
           <button
             className={styles.tipsAddBtn}
-            onClick={handleAdd}
-            disabled={saving || !newDate || !newBody.trim()}
+            onClick={handleAddOverride}
+            disabled={savingOv || !newOvDate || !newOvBody.trim()}
           >
-            {saving ? 'Lagrer…' : 'Legg til'}
+            {savingOv ? 'Lagrer…' : 'Sett override'}
           </button>
         </div>
-        {error && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 6 }}>{error}</div>}
+        {ovError && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 6 }}>{ovError}</div>}
       </div>
 
       {loading ? (
         <div className={styles.empty}>Laster…</div>
       ) : (
         <>
+          {/* ── Pool ── */}
           <div className={styles.tipsSection}>
             <div className={styles.tipsSectionLabel}>
-              Kommende og i dag
-              {upcoming.length === 0 && <span className={styles.tipsWarning}> · Ingen planlagte spørsmål</span>}
+              Spørsmålspool
+              {pool.length === 0 && <span className={styles.tipsWarning}> · Tom! Legg til spørsmål ovenfor.</span>}
+              {poolUnused.length > 0 && <span className={styles.tipsCoverage}> · {poolUnused.length} ubrukte</span>}
             </div>
-            {upcoming.length === 0
-              ? <div className={styles.empty}>Ingen spørsmål planlagt. Legg til nye ovenfor.</div>
-              : upcoming.map(p => (
-                <DailyPromptRow
-                  key={p.id}
-                  prompt={p}
-                  today={today}
-                  isEditing={editId === p.id}
-                  editBody={editBody}
-                  onStartEdit={() => { setEditId(p.id); setEditBody(p.body) }}
-                  onEditChange={setEditBody}
-                  onSaveEdit={() => handleEdit(p.id)}
-                  onCancelEdit={() => setEditId(null)}
-                  onDelete={handleDelete}
-                />
-              ))
+            {pool.length === 0
+              ? <div className={styles.empty}>Ingen spørsmål i pool. Legg til ovenfor.</div>
+              : [...poolUnused, ...poolRecent, ...poolOld].map(p => <DailyPromptRow {...rowProps(p)} />)
             }
           </div>
 
-          <div className={styles.tipsSection}>
-            <div className={styles.tipsSectionLabel}>Tidligere</div>
-            {past.length === 0
-              ? <div className={styles.empty}>Ingen tidligere spørsmål.</div>
-              : past.map(p => (
-                <DailyPromptRow
-                  key={p.id}
-                  prompt={p}
-                  today={today}
-                  isEditing={editId === p.id}
-                  editBody={editBody}
-                  onStartEdit={() => { setEditId(p.id); setEditBody(p.body) }}
-                  onEditChange={setEditBody}
-                  onSaveEdit={() => handleEdit(p.id)}
-                  onCancelEdit={() => setEditId(null)}
-                  onDelete={handleDelete}
-                />
-              ))
-            }
-          </div>
+          {/* ── Date overrides ── */}
+          {overrides.length > 0 && (
+            <div className={styles.tipsSection}>
+              <div className={styles.tipsSectionLabel}>Datooverrides</div>
+              {upcomingOv.length > 0 && (
+                <>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kommende</div>
+                  {upcomingOv.map(p => <DailyPromptRow {...rowProps(p)} />)}
+                </>
+              )}
+              {pastOv.length > 0 && (
+                <>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', margin: '10px 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tidligere</div>
+                  {pastOv.map(p => <DailyPromptRow {...rowProps(p)} />)}
+                </>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -373,12 +438,19 @@ function DailyPromptsTab() {
 }
 
 function DailyPromptRow({ prompt, today, isEditing, editBody, onStartEdit, onEditChange, onSaveEdit, onCancelEdit, onDelete }) {
-  const isToday = prompt.prompt_date === today
+  const isOverride   = prompt.prompt_date != null
+  const isToday      = isOverride && prompt.prompt_date === today
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const isRecent     = !isOverride && prompt.used_at && prompt.used_at >= sevenDaysAgo
+
   return (
     <div className={`${styles.tipRow} ${isToday ? styles.tipRowNext : ''}`}>
       <div className={styles.tipRowLeft} style={{ flex: 1 }}>
-        {isToday && <span className={styles.tipNextBadge}>I dag</span>}
-        <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{prompt.prompt_date}</div>
+        {isToday  && <span className={styles.tipNextBadge}>I dag</span>}
+        {isRecent && <span className={styles.tipNextBadge} style={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>Nylig brukt</span>}
+        {!prompt.used_at && !isOverride && <span className={styles.tipNextBadge} style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>Ubrukt</span>}
+        {isOverride && <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{prompt.prompt_date}</div>}
+        {!isOverride && prompt.used_date && <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>Sist brukt: {prompt.used_date}</div>}
         {isEditing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <textarea
@@ -390,7 +462,7 @@ function DailyPromptRow({ prompt, today, isEditing, editBody, onStartEdit, onEdi
             />
             <div style={{ display: 'flex', gap: 8 }}>
               <button className={styles.tipsAddBtn} onClick={onSaveEdit} disabled={!editBody.trim()}>Lagre</button>
-              <button className={`${styles.btn}`} onClick={onCancelEdit}>Avbryt</button>
+              <button className={styles.btn} onClick={onCancelEdit}>Avbryt</button>
             </div>
           </div>
         ) : (
