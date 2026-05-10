@@ -156,9 +156,6 @@ export default function HjemScreen() {
         <Text style={[styles.greeting, { color: C.text }]}>
           {getGreeting()}{firstName ? `, ${firstName}` : ''}
         </Text>
-        <Text style={[styles.subtitle, { color: C.mutedText }]}>
-          Hva trenger du i dag?
-        </Text>
       </FadeUp>
 
       <FadeUp delay={100}>
@@ -174,16 +171,22 @@ export default function HjemScreen() {
             </View>
           </View>
           <Text style={[styles.cardTitle, { color: C.white }]}>Din reise</Text>
-          {progressReady ? (
+          {progressReady && (
             <Text style={[styles.cardDescription, { color: C.white }]}>
               Uke {activeWeek} · {WEEK_TITLES[activeWeek] ?? ''}
-              {'\n'}{weeksDone} av 8 uker fullført
-            </Text>
-          ) : (
-            <Text style={[styles.cardDescription, { color: C.white }]}>
-              Fortsett der du slapp, i ditt eget tempo.
             </Text>
           )}
+          <View style={styles.weekBar}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.weekSegment,
+                  { backgroundColor: i < weeksDone ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)' },
+                ]}
+              />
+            ))}
+          </View>
           <TouchableOpacity
             style={[styles.startButton, { backgroundColor: 'rgba(255,255,255,0.16)' }]}
             activeOpacity={0.9}
@@ -242,14 +245,15 @@ export default function HjemScreen() {
 const styles = StyleSheet.create({
   container:        { flex: 1 },
   content:          { paddingHorizontal: 24, paddingTop: 72, paddingBottom: 120 },
-  greeting:         { fontSize: 36, fontWeight: '700', marginBottom: 6 },
-  subtitle:         { fontSize: 17, marginBottom: 24 },
+  greeting:         { fontSize: 36, fontWeight: '700', marginBottom: 24 },
   journeyCard:      { borderRadius: 28, padding: 22, marginBottom: 18, borderWidth: 1 },
   cardTopRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
   eyebrow:          { fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   circleButton:     { width: 56, height: 56, borderRadius: 999, borderWidth: 4, borderColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   cardTitle:        { fontSize: 30, fontWeight: '700', marginBottom: 10, maxWidth: '85%' },
   cardDescription:  { fontSize: 16, lineHeight: 24, marginBottom: 18, maxWidth: '90%' },
+  weekBar:          { flexDirection: 'row', gap: 4, marginBottom: 18 },
+  weekSegment:      { flex: 1, height: 4, borderRadius: 999 },
   startButton:      { alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 14 },
   startButtonText:  { fontSize: 15, fontWeight: '700' },
 
